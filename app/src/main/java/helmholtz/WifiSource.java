@@ -1,6 +1,5 @@
-/**
- * Created by dylan on 6/7/15.
- */
+package helmholtz;
+
 public class WifiSource {
 
     boolean double_antenna;

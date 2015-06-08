@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="colt">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/app/libs/colt.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
