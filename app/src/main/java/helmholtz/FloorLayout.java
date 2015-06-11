@@ -26,11 +26,11 @@ public class FloorLayout {
             for (int i=0; i<fplan.get_num_width(); i++){
                 cind = fplan.reg_inds_to_global(i,j);
                 if (i==xloc_ind && j==yloc_ind){
-                    System.out.print(9);
+                    System.out.print(-1);
                     continue;
                 } 
                 System.out.print(fplan.material[cind]);
-                //System.out.print(".");
+                System.out.print(",");
             }
             System.out.println(" ");
         }

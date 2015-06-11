@@ -141,7 +141,7 @@ public class HelmholtzSolver {
             for (int i=0; i<layout.fplan.get_num_width(); i++){
                 cind = layout.fplan.reg_inds_to_global(i,j);
                 System.out.print((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
-                //System.out.print(".");
+                System.out.print(",");
             }
             System.out.println(" ");
         }

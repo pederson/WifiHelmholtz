@@ -71,7 +71,7 @@ public class FloorPlan {
             for (int i=0; i<num_width; i++){
                 cind = reg_inds_to_global(i,j);
                 System.out.print(material[cind]);
-                //System.out.print(".");
+                System.out.print(",");
             }
             System.out.println(" ");
         }
