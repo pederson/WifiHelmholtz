@@ -1,10 +1,22 @@
 package helmholtz;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.SparseDoubleMatrix1D;
-import cern.colt.matrix.linalg.Algebra;
-import cern.colt.matrix.impl.SparseDoubleMatrix2D;
+// normal colt
+// import cern.colt.matrix.DoubleMatrix1D;
+// import cern.colt.matrix.DoubleMatrix2D;
+// import cern.colt.matrix.impl.SparseDoubleMatrix1D;
+// import cern.colt.matrix.linalg.Algebra;
+// import cern.colt.matrix.impl.SparseDoubleMatrix2D;
+
+// parallel colt
+//import cern.colt.matrix.tdouble.algo.DoubleAlgebra;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.tdouble.algo.solver.DoubleGMRES;
+import cern.colt.matrix.tdouble.algo.solver.DoubleBiCG;
+import cern.colt.matrix.tdouble.algo.solver.IterativeSolverDoubleNotConvergedException;
 
 public class HelmholtzSolver {
 
@@ -75,18 +87,65 @@ public class HelmholtzSolver {
 
 
     public void solve(){
-        //DoubleMatrix1D soln = new DenseDoubleMatrix1D(layout.fplan.num_cells_total);
-        DoubleMatrix1D rhs = new SparseDoubleMatrix1D(layout.fplan.num_cells_total);
+        fillMatrix();
 
+        DoubleMatrix1D soln = new DenseDoubleMatrix1D(layout.fplan.num_cells_total);
+
+
+        DoubleMatrix1D rhs = new SparseDoubleMatrix1D(layout.fplan.num_cells_total);
         rhs.setQuick(layout.fplan.reg_inds_to_global(layout.xloc_ind, layout.yloc_ind), 1);
 
-        Algebra linalg = new Algebra();
-        DoubleMatrix2D matinv = linalg.inverse(matrix);
-        DoubleMatrix1D soln = linalg.mult(matinv, rhs);
+        // direct inverse calculation (long)
+        // Algebra linalg = new Algebra();
+        // DoubleMatrix2D matinv = linalg.inverse(matrix);
+        // DoubleMatrix1D soln = linalg.mult(matinv, rhs);
+        
+
+        // iterative GMRES
+        // DoubleGMRES gmrsolver = new DoubleGMRES(soln);
+        // try{
+        //     soln = gmrsolver.solve(matrix, rhs, soln);
+        // }
+        // catch (IterativeSolverDoubleNotConvergedException e){
+        //     System.out.println("There was an issue in GMRES!");
+        //     return;
+        // }
+
+        // iterative BiCG
+        DoubleBiCG bicgsolver = new DoubleBiCG(soln);
+        try{
+            soln = bicgsolver.solve(matrix, rhs, soln);
+        }
+        catch (IterativeSolverDoubleNotConvergedException e){
+            System.out.println("There was an issue in BiCG!");
+            return;
+        }
 
         for (int i=0; i<layout.fplan.num_cells_total; i++){
             solution[i] = soln.get(i);
         }
+    }
+
+    public void print_solution(){
+        int cind;
+        System.out.println("Solution: ");
+
+        double solnmax, solnmin;
+        solnmax = solution[0]; solnmin = solution[0];
+        for (int i=1; i<layout.fplan.get_num_length()*layout.fplan.get_num_width(); i++){
+            if (solution[i] > solnmax) solnmax = solution[i];
+            if (solution[i] < solnmin) solnmin = solution[i];
+        }
+
+        for (int j=layout.fplan.get_num_length()-1; j>=0; j--){
+            for (int i=0; i<layout.fplan.get_num_width(); i++){
+                cind = layout.fplan.reg_inds_to_global(i,j);
+                System.out.print((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
+                //System.out.print(".");
+            }
+            System.out.println(" ");
+        }
+        
     }
 
 

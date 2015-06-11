@@ -11,7 +11,7 @@ public class FloorPlan {
 
     // real refractive index for each material
     double[] real_refractive_index = {1.0,  // free space
-                                      4.0}; // concrete
+                                      20.0}; // concrete
     // imaginary component of refractive index for each material
     double[] imag_refractive_index = {0.0,  // free space
                                       0.1}; // concrete
@@ -62,6 +62,20 @@ public class FloorPlan {
 
     public int get_num_length(){
         return num_length;
+    }
+
+    public void print_floorplan(){
+        int cind;
+        System.out.println("FloorPlan: ");
+        for (int j=num_length-1; j>=0; j--){
+            for (int i=0; i<num_width; i++){
+                cind = reg_inds_to_global(i,j);
+                System.out.print(material[cind]);
+                //System.out.print(".");
+            }
+            System.out.println(" ");
+        }
+        
     }
 
 }
