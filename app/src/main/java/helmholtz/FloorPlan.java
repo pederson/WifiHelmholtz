@@ -11,10 +11,10 @@ public class FloorPlan {
 
     // real refractive index for each material
     double[] real_refractive_index = {1.0,  // free space
-                                      20.0}; // concrete
+                                      5.0}; // concrete
     // imaginary component of refractive index for each material
     double[] imag_refractive_index = {0.0,  // free space
-                                      0.1}; // concrete
+                                      0.42e-3}; // concrete
 
     double length;      // total length (meters)
     double width;       // total width (meters)

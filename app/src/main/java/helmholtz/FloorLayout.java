@@ -27,6 +27,7 @@ public class FloorLayout {
                 cind = fplan.reg_inds_to_global(i,j);
                 if (i==xloc_ind && j==yloc_ind){
                     System.out.print(-1);
+                    System.out.print(",");
                     continue;
                 } 
                 System.out.print(fplan.material[cind]);

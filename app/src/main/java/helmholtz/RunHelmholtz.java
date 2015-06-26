@@ -6,8 +6,8 @@ public class RunHelmholtz{
 
 
 	public static void main(String args[]){
-		//FloorPlan fplan = new FloorPlan(2.0, 2.0, 0.00625, "TestPlan");
-		FloorPlan fplan = new FloorPlan(1.0, 1.0, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(0.6, 0.6, 0.00625, "TestPlan");
+		//FloorPlan fplan = new FloorPlan(1.0, 1.0, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
 		// fill in concrete on the borders
@@ -45,16 +45,16 @@ public class RunHelmholtz{
 		}
 
 		// print it
-		fplan.print_floorplan();
+		//fplan.print_floorplan();
 
 		// add a source in middle of unit
 		WifiSource source = new WifiSource(false, false);
 		flayout.set_source(source);
-		flayout.set_source_location(fplan.get_num_width()/2, fplan.get_num_length()/2);
+		flayout.set_source_location(3*fplan.get_num_width()/4, 3*fplan.get_num_length()/4 + 5);
 
 		flayout.set_floorplan(fplan);
 
-		flayout.print_layout();
+		//flayout.print_layout();
 
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);
 		hsolve.solve();
