@@ -213,13 +213,16 @@ public class HelmholtzSolver {
         w = 2.0*Math.PI*layout.wsource.freqHz;
 
         // Gauss-Seidel SOR
-        double tol = 0.01; 
-        int itermax = 100;
+        double tol = 0.01;  // tolerance
+        int itermax = 20;  // max iteration count
+        double relax = 1.5; // relaxation coefficient
         Complex as, aw, an, ae, ap;
         as = new Complex(1.0, 0);
         aw = new Complex(1.0, 0);
         an = new Complex(1.0, 0);
         ae = new Complex(1.0, 0);
+        Complex cbuf = new Complex(0.0, 0.0);
+        Complex csrc = new Complex(1.0, 0.0);
         Complex[] soln = new Complex[layout.fplan.num_cells_total];
         Complex czero = new Complex(0.0, 0.0);
         for (int i=0; i<layout.fplan.num_cells_total; i++) soln[i] = czero;
@@ -227,7 +230,6 @@ public class HelmholtzSolver {
         for (int i=1; i<layout.fplan.num_width-1; i++){
             for (int j=1; j<layout.fplan.num_length-1; j++){
                 cind = layout.fplan.reg_inds_to_global(i,j);
-
                 soln[cind] = cinit;
             }
         }
@@ -236,17 +238,7 @@ public class HelmholtzSolver {
         double rcur, r0;
         Complex[] resid = new Complex[layout.fplan.num_cells_total];
         for (int i=0; i<layout.fplan.num_cells_total; i++) resid[i] = czero;
-        // calculate the norm of the residual
-        r0 = 0;
-        for (int i=0; i<layout.fplan.num_cells_total; i++){
-            r0 += soln[i].abs()*soln[i].abs();
-        }
-        // calculate the error err = norm(r)/r0
-        err = r0;
-        Complex cbuf = new Complex(0.0, 0.0);
-        while (err > tol && iter < itermax){
-
-            // iterate on the values
+        // calculate the initial residual r = b - A*x
             for (int i=1; i<layout.fplan.num_width-1; i++){
                 for (int j=1; j<layout.fplan.num_length-1; j++){
 
@@ -260,11 +252,49 @@ public class HelmholtzSolver {
                     sigma = layout.fplan.get_imag_refractive_index(i,j);
                     // nonzero matrix values
                     ap = new Complex(hsq*ksq*nsq - 4, hsq*w*sigma/eps0);
+
+                    resid[cind] = cbuf.add(hsq*rhs[cind]).subtract(soln[cind].multiply(ap)).subtract(soln[dind].multiply(as)).subtract(soln[lind].multiply(aw)).subtract(soln[uind].multiply(an)).subtract(soln[rind].multiply(ae));
+                    // resid[cind] = rhs[cind] - (as*soln[dind]
+                    //                          + an*soln[uind]
+                    //                          + ae*soln[rind]
+                    //                          + aw*soln[lind]
+                    //                          + ap*soln[cind]);
+                }
+            }
+        // calculate the norm of the residual
+        r0 = 0;
+        for (int i=0; i<layout.fplan.num_cells_total; i++){
+            r0 += resid[i].abs()*resid[i].abs();
+        }
+        // calculate the error err = norm(r)/r0
+        err = r0;
+        
+        while (err > tol && iter < itermax){
+
+            // iterate on the values
+            for (int i=1; i<layout.fplan.num_width-1; i++){
+                for (int j=1; j<layout.fplan.num_length-1; j++){
+
+                    cind = layout.fplan.reg_inds_to_global(i,j);
+
+                    if (rhs[cind] == 1){
+                        soln[cind] = csrc;
+                        continue;
+                    } 
+                    lind = layout.fplan.reg_inds_to_global(i-1,j);
+                    rind = layout.fplan.reg_inds_to_global(i+1,j);
+                    uind = layout.fplan.reg_inds_to_global(i,j+1);
+                    dind = layout.fplan.reg_inds_to_global(i,j-1);
+
+                    nsq = Math.pow(layout.fplan.get_real_refractive_index(i,j),2);
+                    sigma = layout.fplan.get_imag_refractive_index(i,j);
+                    // nonzero matrix values
+                    ap = new Complex(hsq*ksq*nsq - 4, hsq*w*sigma/eps0);
                     
 
                     // update
                     //cbuf.add(hsq*rhs[cind]);
-                    soln[cind] = cbuf.add(hsq*rhs[cind]).subtract(soln[dind].multiply(as)).subtract(soln[lind].multiply(aw)).subtract(soln[uind].multiply(an)).subtract(soln[rind].multiply(ae)).divide(ap);
+                    soln[cind] = cbuf.add(hsq*rhs[cind]).subtract(soln[dind].multiply(as)).subtract(soln[lind].multiply(aw)).subtract(soln[uind].multiply(an)).subtract(soln[rind].multiply(ae)).divide(ap).multiply(relax).add(soln[cind].multiply(1-relax));
                     // soln[cind] = (hsq*rhs[cind] 
                     //             - soln[dind].multiply(as) 
                     //             - aw*soln[lind] 
@@ -300,16 +330,16 @@ public class HelmholtzSolver {
             // calculate the norm of the residual
             rcur = 0;
             for (int i=0; i<layout.fplan.num_cells_total; i++){
-                rcur += soln[i].abs()*soln[i].abs();
+                rcur += resid[i].abs()*resid[i].abs();
             }
 
             // calculate the error err = norm(r)/r0
             err = rcur/r0;
 
-            System.out.print("Iteration: ");
-            System.out.print(iter);
-            System.out.print(" Error: ");
-            System.out.println(err);
+            // System.out.print("Iteration: ");
+            // System.out.print(iter);
+            // System.out.print(" Error: ");
+            // System.out.println(err);
 
             // increment
             iter++;
@@ -329,7 +359,7 @@ public class HelmholtzSolver {
 
     public void print_solution(){
         int cind;
-        System.out.println("Solution: ");
+        //System.out.println("Solution: ");
 
         double solnmax, solnmin;
         solnmax = solution[0]; solnmin = solution[0];

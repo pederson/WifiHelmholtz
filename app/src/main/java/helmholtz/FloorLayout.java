@@ -21,7 +21,7 @@ public class FloorLayout {
 
     public void print_layout(){
         int cind;
-        System.out.println("FloorLayout: ");
+        //System.out.println("FloorLayout: ");
         for (int j=fplan.get_num_length()-1; j>=0; j--){
             for (int i=0; i<fplan.get_num_width(); i++){
                 cind = fplan.reg_inds_to_global(i,j);
