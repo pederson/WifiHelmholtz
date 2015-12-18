@@ -7,14 +7,32 @@ public class FloorPlan {
     // material index for each pixel
     int[] material;     // 0 for empty space
                         // 1 for concrete
-                        // more materials can be filled in later
+                        // 2 - brick
+                        // 3 - wood
+                        // 4 - glass
+                        // 5 - drywall
+                        // more materials can be added
 
-    // real refractive index for each material
-    double[] real_refractive_index = {1.0,  // free space
-                                      5.0}; // concrete
-    // imaginary component of refractive index for each material
-    double[] imag_refractive_index = {0.0,  // free space
-                                      0.42e-3}; // concrete
+    // see the report: "Building Materials and Propagation: Final Report"
+    // by Ofcom for source of these values
+    // everything assumes 5 GHz (OK b/c property variations b/w 5 and 2.5 GHz are small)
+    // relative permittivity
+    double[] permittivity = {1.0,   // free space
+                             5.31,  // concrete
+                             3.75,  // brick
+                             1.99,  // wood
+                             6.27,  // glass
+                             2.94   // drywall
+                             }; 
+
+    // conductivity
+    double[] conductivity = {0.0,       // free space
+                             1.1996e-1, // concrete
+                             3.8e-2,    // brick
+                             2.638e-2,  // wood
+                             2.93e-2,   // glass
+                             3.62e-2    // drywall
+                             };
 
     double length;      // total length (meters)
     double width;       // total width (meters)
@@ -48,12 +66,12 @@ public class FloorPlan {
         return material[reg_inds_to_global(i,j)];
     }
 
-    public double get_real_refractive_index(int i, int j){
-        return real_refractive_index[material[reg_inds_to_global(i,j)]];
+    public double get_permittivity(int i, int j){
+        return permittivity[material[reg_inds_to_global(i,j)]];
     }
 
-    public double get_imag_refractive_index(int i, int j){
-        return imag_refractive_index[material[reg_inds_to_global(i,j)]];
+    public double get_conductivity(int i, int j){
+        return conductivity[material[reg_inds_to_global(i,j)]];
     }
 
     public int get_num_width(){
