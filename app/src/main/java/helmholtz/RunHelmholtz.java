@@ -8,7 +8,7 @@ public class RunHelmholtz{
 	public static void main(String args[]){
 
 		//FloorPlan fplan = new FloorPlan(5.0, 5.0, 0.00625, "TestPlan");
-		FloorPlan fplan = new FloorPlan(1.0, 1.0, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(0.5, 0.5, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
 		// fill in concrete on the borders
@@ -33,29 +33,29 @@ public class RunHelmholtz{
 
 		}
 
-		// add a "doorway" 3/4 of the way to the top
-		int j34 = (int)(0.75*(double)fplan.get_num_length());
-		for (int i=0; i<(int)(0.75*(double)fplan.get_num_width()); i++){
-			fplan.set_pixel_material(1, i, j34);
-			fplan.set_pixel_material(1, i, j34+1);
-			fplan.set_pixel_material(1, i, j34-1);
-			fplan.set_pixel_material(1, i, j34+2);
-			fplan.set_pixel_material(1, i, j34-2);
-			fplan.set_pixel_material(1, i, j34+3);
-			fplan.set_pixel_material(1, i, j34-3);
-		}
+		// // add a "doorway" 3/4 of the way to the top
+		// int j34 = (int)(0.75*(double)fplan.get_num_length());
+		// for (int i=0; i<(int)(0.75*(double)fplan.get_num_width()); i++){
+		// 	fplan.set_pixel_material(1, i, j34);
+		// 	fplan.set_pixel_material(1, i, j34+1);
+		// 	fplan.set_pixel_material(1, i, j34-1);
+		// 	fplan.set_pixel_material(1, i, j34+2);
+		// 	fplan.set_pixel_material(1, i, j34-2);
+		// 	fplan.set_pixel_material(1, i, j34+3);
+		// 	fplan.set_pixel_material(1, i, j34-3);
+		// }
 
-		// add another room 1/4 of the way from the left
-		int i14 = (int)(0.25*(double)fplan.get_num_width());
-		for (int j=0; j<(int)(0.6*(double)fplan.get_num_length()); j++){
-			fplan.set_pixel_material(1, i14, j);
-			fplan.set_pixel_material(1, i14, j+1);
-			fplan.set_pixel_material(1, i14, j+2);
-			fplan.set_pixel_material(1, i14, j+3);
-			fplan.set_pixel_material(1, i14, j+4);
-			fplan.set_pixel_material(1, i14, j+5);
-			fplan.set_pixel_material(1, i14, j+6);
-		}
+		// // add another room 1/4 of the way from the left
+		// int i14 = (int)(0.25*(double)fplan.get_num_width());
+		// for (int j=0; j<(int)(0.6*(double)fplan.get_num_length()); j++){
+		// 	fplan.set_pixel_material(1, i14, j);
+		// 	fplan.set_pixel_material(1, i14, j+1);
+		// 	fplan.set_pixel_material(1, i14, j+2);
+		// 	fplan.set_pixel_material(1, i14, j+3);
+		// 	fplan.set_pixel_material(1, i14, j+4);
+		// 	fplan.set_pixel_material(1, i14, j+5);
+		// 	fplan.set_pixel_material(1, i14, j+6);
+		// }
 
 		// print it
 		//fplan.print_floorplan();
@@ -67,7 +67,7 @@ public class RunHelmholtz{
 
 		flayout.set_floorplan(fplan);
 
-		//flayout.print_layout();
+		flayout.print_layout();
 
 		System.out.println("Setting up solver!");
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);

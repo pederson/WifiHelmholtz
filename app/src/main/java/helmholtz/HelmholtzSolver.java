@@ -1,12 +1,5 @@
 package helmholtz;
 
-// normal colt
-// import cern.colt.matrix.DoubleMatrix1D;
-// import cern.colt.matrix.DoubleMatrix2D;
-// import cern.colt.matrix.impl.SparseDoubleMatrix1D;
-// import cern.colt.matrix.linalg.Algebra;
-// import cern.colt.matrix.impl.SparseDoubleMatrix2D;
-
 // parallel colt
 // API can be found here: http://incanter.org/docs/parallelcolt/api/
 import cern.colt.matrix.tdcomplex.impl.SparseDComplexMatrix2D;
@@ -15,16 +8,12 @@ import cern.colt.matrix.tdcomplex.DComplexMatrix2D;
 import cern.colt.matrix.tdcomplex.DComplexMatrix1D;
 import cern.jet.math.tdcomplex.DComplexFunctions;
 import cern.jet.math.tdcomplex.DComplex;
-// import cern.colt.matrix.tdouble.DoubleMatrix1D;
-// import cern.colt.matrix.tdouble.DoubleMatrix2D;
-// import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix2D;
-// import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
-// import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
-// import cern.colt.matrix.tdouble.algo.solver.DoubleGMRES;
-// import cern.colt.matrix.tdouble.algo.solver.DoubleBiCG;
-// import cern.colt.matrix.tdouble.algo.solver.IterativeSolverDoubleNotConvergedException;
+import cern.colt.list.tint.IntArrayList;
+import java.util.ArrayList;
 
-// import org.apache.commons.math3.complex.Complex;
+// Concurrent Hash Map from Java Utils
+import java.util.concurrent.*;
+//import java.util.concurrent.ConcurrrentHashMap;
 
 public class HelmholtzSolver {
 
@@ -32,28 +21,36 @@ public class HelmholtzSolver {
     double[] solution;
     DComplexMatrix2D matrix;
 
+    ConcurrentHashMap<Long, double[]> hmap;
     //DoubleMatrix2D matrix;
-
 
     public HelmholtzSolver(FloorLayout flayout){
         layout = flayout;
         solution = new double[layout.fplan.num_cells_total];
         
-        //matrix = new SparseDComplexMatrix2D(layout.fplan.num_cells_total, layout.fplan.num_cells_total);
-        matrix = new SparseDComplexMatrix2D(layout.fplan.num_cells_total, layout.fplan.num_cells_total, 5*layout.fplan.num_cells_total, 0.3, 1.0);
-        System.out.print("number cells total: " );
-        System.out.println(layout.fplan.num_cells_total);
-        System.out.print("matrix size: " );
-        System.out.println(matrix.size());
-        //matrix = new SparseDoubleMatrix2D(layout.fplan.num_cells_total, layout.fplan.num_cells_total);
-        //matrix = new SparseDoubleMatrix2D(layout.fplan.num_cells_total*2, layout.fplan.num_cells_total*2);
-    }
+        // allocating the matrix here creates problems
+        // The Colt interface hasn't yet supported constructing 
+        // Sparse Complex matrices in this way.
+        // Need to populate a ConcurrentHashMap instead, then construct
+        // with the HashMap
+        //matrix = new SparseDComplexMatrix2D(0, 0);
+        //matrix = new SparseDComplexMatrix2D(layout.fplan.num_cells_total, layout.fplan.num_cells_total, 5*layout.fplan.num_cells_total, 0.3, 1.0);
+
+   }
 
     public void fillMatrix(){
 
-        
-        matrix.assign(0.0, 0.0);     // assign zeros and trim to basically "clear" the matrix
-        matrix.trimToSize();
+        int m = layout.fplan.num_cells_total;
+
+        // fill out a ConcurrentHashMap with nodes
+        System.out.println("about to instantiate HashMap");
+        //hmap = new ConcurrentHashMap<Long, double[]>(5*m);
+        //hmap = new ConcurrentHashMap<Long, double[]>();
+        System.out.println("HashMap instantiated");
+        // matrix.assign(0.0, 0.0);     // assign zeros and trim to basically "clear" the matrix
+        // matrix.trimToSize();
+
+        matrix = new SDCMatrix2D(m,m);
 
         double c0 = 2.99e+8;            // speed of light
         double eps0 = 8.85418782e-12;   // vacuum permittivity
@@ -62,6 +59,11 @@ public class HelmholtzSolver {
         double nsq;
         double omega;
         double sigma, wsq;
+
+        Indices idx = new Indices(0,0);
+        Long pos = new Long(0L);
+        double[] val = {0.0, 0.0};
+
         int cind, lind, rind, uind, dind, exind;
 
         omega = 2.0*Math.PI*layout.wsource.freqHz;
@@ -86,8 +88,49 @@ public class HelmholtzSolver {
                 matrix.setQuick(cind, rind, 1 / Math.pow(layout.fplan.res,2), 0.0);
                 matrix.setQuick(cind, uind, 1 / Math.pow(layout.fplan.res,2), 0.0);
                 matrix.setQuick(cind, dind, 1 / Math.pow(layout.fplan.res,2), 0.0);
+            
+                // set the HashMap values
+
+                // // center
+                // val[0] = ksq*nsq - 4.0/Math.pow(layout.fplan.res, 2);
+                // val[1] = -omega*mu0*sigma;
+                // pos = new Long((long)cind*m + cind);
+                // hmap.put(pos, val);
+
+                // // left
+                // val[0] = 1.0 / Math.pow(layout.fplan.res,2);
+                // val[1] = 0.0;
+                // pos = new Long((long)cind*m + lind);
+                // hmap.put(pos, val);
+
+                // // right
+                // pos = new Long((long)cind*m + rind);
+                // hmap.put(pos, val);
+
+                // // up
+                // pos = new Long((long)cind*m + uind);
+                // hmap.put(pos, val);
+
+                // // down
+                // pos = new Long((long)cind*m + dind);
+                // hmap.put(pos, val);
             }
         }
+
+        //System.out.println("HashMap size: "+hmap.size());
+
+        // construct sparse matrix using hashmap
+        System.out.println("about to allocate matrix");
+        //matrix = new SDCMatrix2D(m, m, hmap, 1, 1, 1, 1);
+        System.out.println("matrix is allocated");
+        //matrix.setQuick(0, 0, 1.0, -1.0);
+
+        // check nonzero entries
+        IntArrayList rowList = new IntArrayList();
+        IntArrayList colList = new IntArrayList();
+        ArrayList<double[]> valList = new ArrayList<double[]>();
+        matrix.getNonZeros(rowList, colList, valList);
+        System.out.println("there are "+valList.size()+" nonzeros in the list");
 
 
         // deal with boundary conditions
@@ -114,11 +157,20 @@ public class HelmholtzSolver {
         //     cind = layout.fplan.reg_inds_to_global(2*(layout.fplan.num_width-1),2*j);
         //     matrix.setQuick(cind, cind,1.0);
         // }
+
+
+        System.out.print("number cells total: " );
+        System.out.println(layout.fplan.num_cells_total);
+        System.out.print("matrix size: " );
+        System.out.println(matrix.size());
         
     }
 
 
     public void solve(){
+
+        // first, fill in the matrix if not already filled
+        fillMatrix();
 
         // some parameters
         double tol = 1.0e-5;  // tolerance on the residual
@@ -195,8 +247,7 @@ public class HelmholtzSolver {
             //x += alpha*d;
 
             ctr++;
-            System.out.print("resid: ");
-            System.out.println(resid);
+            System.out.println("iter: "+ctr+" resid: "+resid);
         }
 
         // extract the resulting magnitude
