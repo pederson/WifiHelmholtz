@@ -1,7 +1,5 @@
 package helmholtz;
 
-//import helmholtz.FloorPlan;
-
 public class RunHelmholtz{
 
 
@@ -67,11 +65,9 @@ public class RunHelmholtz{
 
 		flayout.set_floorplan(fplan);
 
-		flayout.print_layout();
+		//flayout.print_layout();
 
-		System.out.println("Setting up solver!");
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);
-		System.out.println("Trying to solve!");
 		hsolve.solve();
 		hsolve.print_solution();
 	}

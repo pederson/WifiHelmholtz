@@ -21,6 +21,13 @@ public class Complex extends Object {
         x=u;
         y=v;
     }
+
+    /*
+        Returns a copy of the current object
+    */
+    public Complex copy(){
+        return new Complex(x, y);
+    }
     
     /*
         Real part of this Complex number 

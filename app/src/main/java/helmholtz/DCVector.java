@@ -3,26 +3,26 @@ package helmholtz;
 
 public class DCVector extends Object{
 	private Complex[] data;
-	private long length;
+	private int length;
 
-	public DCVector(long len){
+	public DCVector(int len){
 		length = len;
 		data = new Complex[len];
 	}
 
-	public long size(){return length;};
+	public int size(){return length;};
 
-	public Complex at(long i){
+	public Complex at(int i){
 		return data[i];
 	}
 
-	public void put(long i, Complex val){
+	public void put(int i, Complex val){
 		data[i] = val;
 	}
 
 	public void assign(Complex val){
-		for (long i=0; i<length; i++){
-			data[i] = val;
+		for (int i=0; i<length; i++){
+			data[i] = val.copy();
 		}
 	}
 }
