@@ -140,20 +140,29 @@ public class HelmholtzSolver {
 
         // some parameters
         double tol = 1.0e-5;  // tolerance on the residual
-        int itermax = 100;  // max iteration count
+        int itermax = 300;  // max iteration count
 
-        System.out.println("About to MatVec");
-        // ***** THIS IS NOT THE ACTUAL SOLUTION *** JUST A TEST
-        DCVector soln = mat.MatVec(rhs);
-        //*********************************************
-        System.out.println("MatVec done");
+        // System.out.println("About to MatVec");
+        // DCVector soln = mat.MatVec(rhs);
+        // //***** THIS IS NOT THE ACTUAL SOLUTION *** JUST A TEST
+        // for (int i=0; i<20; i++){
+        //     soln = mat.MatVec(rhs);
+        //     rhs = soln;
+        // }
+        // //*********************************************
+        // System.out.println("MatVec done");
 
-    //**** END MAIN LOOP **********************
+        DCVector soln = new DCVector(rhs.size());
+        BiCGSTAB slvr = new BiCGSTAB();
+        slvr.set_max_iters(itermax);
+        slvr.set_tolerance(tol);
+        soln = slvr.solve(mat, rhs, soln);
 
         // calculate the resulting magnitude
         for (int i=0; i<layout.fplan.num_cells_total; i++){
             solution[i] = soln.at(i).mod();
         }
+
 
 
     }

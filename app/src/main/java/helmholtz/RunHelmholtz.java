@@ -6,7 +6,7 @@ public class RunHelmholtz{
 	public static void main(String args[]){
 
 		//FloorPlan fplan = new FloorPlan(5.0, 5.0, 0.00625, "TestPlan");
-		FloorPlan fplan = new FloorPlan(0.5, 0.5, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(1.0, 1.0, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
 		// fill in concrete on the borders
