@@ -1,56 +1,45 @@
 package helmholtz;
 
-// parallel colt
-// API can be found here: http://incanter.org/docs/parallelcolt/api/
-import cern.colt.matrix.tdcomplex.impl.SparseDComplexMatrix2D;
-import cern.colt.matrix.tdcomplex.impl.DenseDComplexMatrix1D;
-import cern.colt.matrix.tdcomplex.DComplexMatrix2D;
-import cern.colt.matrix.tdcomplex.DComplexMatrix1D;
-import cern.jet.math.tdcomplex.DComplexFunctions;
-import cern.jet.math.tdcomplex.DComplex;
-import cern.colt.list.tint.IntArrayList;
-import java.util.ArrayList;
-
-// Concurrent Hash Map from Java Utils
-import java.util.concurrent.*;
-//import java.util.concurrent.ConcurrrentHashMap;
+// HashMap from java utils
+import java.util.HashMap;
 
 public class HelmholtzSolver {
-
+    boolean layout_changed, source_changed;
     FloorLayout layout;
     double[] solution;
-    DComplexMatrix2D matrix;
 
-    ConcurrentHashMap<Long, double[]> hmap;
-    //DoubleMatrix2D matrix;
+    DCVector rhs;
+    SDCMatrix mat;
 
     public HelmholtzSolver(FloorLayout flayout){
         layout = flayout;
         solution = new double[layout.fplan.num_cells_total];
         
-        // allocating the matrix here creates problems
-        // The Colt interface hasn't yet supported constructing 
-        // Sparse Complex matrices in this way.
-        // Need to populate a ConcurrentHashMap instead, then construct
-        // with the HashMap
-        //matrix = new SparseDComplexMatrix2D(0, 0);
-        //matrix = new SparseDComplexMatrix2D(layout.fplan.num_cells_total, layout.fplan.num_cells_total, 5*layout.fplan.num_cells_total, 0.3, 1.0);
+        layout_changed = true;
+        source_changed = true;
 
-   }
+    }
 
-    public void fillMatrix(){
+    private void fillRHS(){
+        if (!source_changed) return;
+
+        // RHS
+        rhs = new DCVector(layout.fplan.num_cells_total);
+        rhs.assign(Complex(0.0, 0.0));
+        rhs.put(layout.fplan.reg_inds_to_global(layout.xloc_ind, layout.yloc_ind), Complex(1.0, 0.0));
+    
+        source_changed = false;
+    }
+
+    private void fillMatrix(){
+        if (!layout_changed) return;
 
         int m = layout.fplan.num_cells_total;
 
-        // fill out a ConcurrentHashMap with nodes
+        // fill out a HashMap with nodes
         System.out.println("about to instantiate HashMap");
-        //hmap = new ConcurrentHashMap<Long, double[]>(5*m);
-        //hmap = new ConcurrentHashMap<Long, double[]>();
+        HashMap hmap = new HashMap<IndexPair, Complex>(5*m);
         System.out.println("HashMap instantiated");
-        // matrix.assign(0.0, 0.0);     // assign zeros and trim to basically "clear" the matrix
-        // matrix.trimToSize();
-
-        matrix = new SDCMatrix2D(m,m);
 
         double c0 = 2.99e+8;            // speed of light
         double eps0 = 8.85418782e-12;   // vacuum permittivity
@@ -60,9 +49,8 @@ public class HelmholtzSolver {
         double omega;
         double sigma, wsq;
 
-        Indices idx = new Indices(0,0);
-        Long pos = new Long(0L);
-        double[] val = {0.0, 0.0};
+        IndexPair idx = new IndexPair(0,0);
+        Complex val;
 
         int cind, lind, rind, uind, dind, exind;
 
@@ -82,56 +70,32 @@ public class HelmholtzSolver {
                 nsq = Math.pow(layout.fplan.get_permittivity(i,j),2);
                 sigma = layout.fplan.get_conductivity(i,j);
 
-                // set for ParallelColt SparseDComplexMatrix2D
-                matrix.setQuick(cind, cind ,ksq*nsq - 4.0/Math.pow(layout.fplan.res, 2), -omega*mu0*sigma);
-                matrix.setQuick(cind, lind, 1 / Math.pow(layout.fplan.res,2), 0.0);
-                matrix.setQuick(cind, rind, 1 / Math.pow(layout.fplan.res,2), 0.0);
-                matrix.setQuick(cind, uind, 1 / Math.pow(layout.fplan.res,2), 0.0);
-                matrix.setQuick(cind, dind, 1 / Math.pow(layout.fplan.res,2), 0.0);
-            
                 // set the HashMap values
+                // center
+                idx = IndexPair(cind, cind);
+                val = Complex(ksq*nsq - 4.0/Math.pow(layout.fplan.res, 2), -omega*mu0*sigma);
+                hmap.put(idx, val);
 
-                // // center
-                // val[0] = ksq*nsq - 4.0/Math.pow(layout.fplan.res, 2);
-                // val[1] = -omega*mu0*sigma;
-                // pos = new Long((long)cind*m + cind);
-                // hmap.put(pos, val);
+                // left
+                idx = IndexPair(cind, lind);
+                val = Complex(1.0 / Math.pow(layout.fplan.res,2), 0.0);
+                hmap.put(idx, val);
 
-                // // left
-                // val[0] = 1.0 / Math.pow(layout.fplan.res,2);
-                // val[1] = 0.0;
-                // pos = new Long((long)cind*m + lind);
-                // hmap.put(pos, val);
+                // right
+                idx = IndexPair(cind, rind);
+                hmap.put(idx, val);
 
-                // // right
-                // pos = new Long((long)cind*m + rind);
-                // hmap.put(pos, val);
+                // up
+                idx = IndexPair(cind, uind);
+                hmap.put(idx, val);
 
-                // // up
-                // pos = new Long((long)cind*m + uind);
-                // hmap.put(pos, val);
-
-                // // down
-                // pos = new Long((long)cind*m + dind);
-                // hmap.put(pos, val);
+                // down
+                idx = IndexPair(cind, dind);
+                hmap.put(idx, val);
             }
         }
 
-        //System.out.println("HashMap size: "+hmap.size());
-
-        // construct sparse matrix using hashmap
-        System.out.println("about to allocate matrix");
-        //matrix = new SDCMatrix2D(m, m, hmap, 1, 1, 1, 1);
-        System.out.println("matrix is allocated");
-        //matrix.setQuick(0, 0, 1.0, -1.0);
-
-        // check nonzero entries
-        IntArrayList rowList = new IntArrayList();
-        IntArrayList colList = new IntArrayList();
-        ArrayList<double[]> valList = new ArrayList<double[]>();
-        matrix.getNonZeros(rowList, colList, valList);
-        System.out.println("there are "+valList.size()+" nonzeros in the list");
-
+        System.out.println("HashMap size: "+hmap.size());
 
         // deal with boundary conditions
         // // top boundary
@@ -158,12 +122,14 @@ public class HelmholtzSolver {
         //     matrix.setQuick(cind, cind,1.0);
         // }
 
+        // make a matrix out of the hashmap
+        mat = new SDCMatrix(m, m, hmap);
 
-        System.out.print("number cells total: " );
-        System.out.println(layout.fplan.num_cells_total);
-        System.out.print("matrix size: " );
-        System.out.println(matrix.size());
+        System.out.println("matrix dims: "+mat.rows()+" x "+mat.cols());
+        System.out.print("matrix nonzeros: " );
+        System.out.println(mat.size());
         
+        layout_changed = false;
     }
 
 
@@ -172,88 +138,86 @@ public class HelmholtzSolver {
         // first, fill in the matrix if not already filled
         fillMatrix();
 
+        // fill RHS if not already done
+        fillRHS();
+
         // some parameters
         double tol = 1.0e-5;  // tolerance on the residual
         int itermax = 100;  // max iteration count
 
 
-        // RHS
-        System.out.println("Setting up b");
-        DComplexMatrix1D b = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
-        b.assign(0.0, 0.0); // zero out the vector
-        b.setQuick(layout.fplan.reg_inds_to_global(layout.xloc_ind, layout.yloc_ind), 1.0, 0.0);
+        
+        // // initial guess and residual
+        // System.out.println("Setting up x");
+        // DComplexMatrix1D x = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
+        // x.assign(0.0, 0.0);
+        // System.out.println("Setting up r");
+        // DComplexMatrix1D r = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
+        // r.assign(b);
+        // double[] minus_real = {-1.0, 0.0};
+        // double[] plus_real = {1.0, 0.0};
+        // System.out.print("matrix size: " );
+        // System.out.println(matrix.size());
+        // System.out.println("Calculating initial r");
+        // matrix.zMult(x, r, minus_real, plus_real, false);
+        // //r = b-matrix*x;
+        // double r0 = DComplex.abs(r.zDotProduct(r));
+        // double resid = r0;
+        // double[] alpha;
+        // double[] beta;
 
-        // initial guess and residual
-        System.out.println("Setting up x");
-        DComplexMatrix1D x = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
-        x.assign(0.0, 0.0);
-        System.out.println("Setting up r");
-        DComplexMatrix1D r = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
-        r.assign(b);
-        double[] minus_real = {-1.0, 0.0};
-        double[] plus_real = {1.0, 0.0};
-        System.out.print("matrix size: " );
-        System.out.println(matrix.size());
-        System.out.println("Calculating initial r");
-        matrix.zMult(x, r, minus_real, plus_real, false);
-        //r = b-matrix*x;
-        double r0 = DComplex.abs(r.zDotProduct(r));
-        double resid = r0;
-        double[] alpha;
-        double[] beta;
-
-        // iterative GMRES
+        // // iterative GMRES
 
 
-        // iterative BiCG
+        // // iterative BiCG
 
 
-        // iterative CG
-        System.out.println("Setting up d");
-        DComplexMatrix1D d = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
-        d.assign(r);
-        System.out.println("matvec");
-        DComplexMatrix1D matvec = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
-        matrix.zMult(d, matvec);
-        alpha = DComplex.plus(d.zDotProduct(r), d.zDotProduct(matvec));
-        x.assign(b);
-        x.assign(DComplexFunctions.mult(alpha));
+        // // iterative CG
+        // System.out.println("Setting up d");
+        // DComplexMatrix1D d = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
+        // d.assign(r);
+        // System.out.println("matvec");
+        // DComplexMatrix1D matvec = new DenseDComplexMatrix1D(layout.fplan.num_cells_total);
+        // matrix.zMult(d, matvec);
+        // alpha = DComplex.plus(d.zDotProduct(r), d.zDotProduct(matvec));
+        // x.assign(b);
+        // x.assign(DComplexFunctions.mult(alpha));
 
-        System.out.println("Starting iterations");
-        int ctr=0;
-        while(resid > tol && ctr < itermax)
-        {
-            // calculate residual
-            r.assign(b);
-            matrix.zMult(x, r, minus_real, plus_real, false);
-            resid = DComplex.abs(r.zDotProduct(r));
+        // System.out.println("Starting iterations");
+        // int ctr=0;
+        // while(resid > tol && ctr < itermax)
+        // {
+        //     // calculate residual
+        //     r.assign(b);
+        //     matrix.zMult(x, r, minus_real, plus_real, false);
+        //     resid = DComplex.abs(r.zDotProduct(r));
 
-            // pick new search direction
-            beta = DComplex.div(r.zDotProduct(matvec), d.zDotProduct(matvec));
-            beta = DComplex.mult(minus_real, beta);
-            d.assign(DComplexFunctions.mult(beta));
-            d.assign(r, DComplexFunctions.plus);
-            //d = r - beta*d;
+        //     // pick new search direction
+        //     beta = DComplex.div(r.zDotProduct(matvec), d.zDotProduct(matvec));
+        //     beta = DComplex.mult(minus_real, beta);
+        //     d.assign(DComplexFunctions.mult(beta));
+        //     d.assign(r, DComplexFunctions.plus);
+        //     //d = r - beta*d;
 
-            // one matrix-vector product
-            matrix.zMult(d, matvec);
+        //     // one matrix-vector product
+        //     matrix.zMult(d, matvec);
 
-            // calculate new step size
-            alpha = DComplex.div(d.zDotProduct(r), d.zDotProduct(matvec));
+        //     // calculate new step size
+        //     alpha = DComplex.div(d.zDotProduct(r), d.zDotProduct(matvec));
 
-            // update x
-            d.assign(DComplexFunctions.mult(alpha));
-            x.assign(d, DComplexFunctions.plus);
-            //x += alpha*d;
+        //     // update x
+        //     d.assign(DComplexFunctions.mult(alpha));
+        //     x.assign(d, DComplexFunctions.plus);
+        //     //x += alpha*d;
 
-            ctr++;
-            System.out.println("iter: "+ctr+" resid: "+resid);
-        }
+        //     ctr++;
+        //     System.out.println("iter: "+ctr+" resid: "+resid);
+        // }
 
-        // extract the resulting magnitude
-        for (int i=0; i<layout.fplan.num_cells_total; i++){
-            solution[i] = DComplex.abs(x.getQuick(i));
-        }
+        // // extract the resulting magnitude
+        // for (int i=0; i<layout.fplan.num_cells_total; i++){
+        //     solution[i] = DComplex.abs(x.getQuick(i));
+        // }
 
 
         // // set the right hand side
@@ -462,10 +426,6 @@ public class HelmholtzSolver {
 
     }
 
-    // absolute value of complex number
-    public double cabs(double[] z){
-        return Math.sqrt(z[0]*z[0] + z[1]*z[1]);
-    }
 
     public void print_solution(){
         int cind;
