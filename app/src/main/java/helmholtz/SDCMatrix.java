@@ -151,6 +151,29 @@ public class SDCMatrix extends Object{
 		return result;
 	}
 
+
+	public DCVector solveDiagonal(DCVector vec){
+		DCVector out = new DCVector(vec.size());
+		out.assign(new Complex(0.0, 0.0));
+
+		// iterate through the matrix
+		// if a value is on the diagonal, 
+		// divide the corresponding vec value by it
+		// and return as result. 
+		for (int i=0; i<ncols; i++){
+			for (int j=row_ptr[i]; j<row_ptr[i+1]; j++){
+
+				if (col_ind[j] == i){
+					out.put(i, vec.at(i).div(values[j]));
+				}
+			}
+		}
+
+		return out;
+	}
+
+
+
 	public void printPreview(){
 		System.out.print("val: ");
 		for (int i=0; i<10; i++){

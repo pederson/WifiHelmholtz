@@ -93,30 +93,59 @@ public class HelmholtzSolver {
             }
         }
 
-        // deal with boundary conditions
-        // // top boundary
-        // for (int i=0; i<layout.fplan.num_width; i++){
-        //     cind = layout.fplan.reg_inds_to_global(2*i,2*(layout.fplan.num_length-1));
-        //     matrix.setQuick(cind, cind,1.0);
-        // }
+        // FIRST ORDER absorbing boundaries
+        // top boundary
+        for (int i=0; i<layout.fplan.num_width; i++){
 
-        // // bottom boundary
-        // for (int i=0; i<layout.fplan.num_width; i++){
-        //     cind = layout.fplan.reg_inds_to_global(2*i,0);
-        //     matrix.setQuick(cind, cind,1.0);
-        // }
+            cind = layout.fplan.reg_inds_to_global(i,layout.fplan.num_length-1);
+            dind = layout.fplan.reg_inds_to_global(i,layout.fplan.num_length-2);
+            
+            idx = new IndexPair(cind, cind);
+            hmap.put(idx, new Complex(1.0/layout.fplan.res, -omega));
+        
+            idx = new IndexPair(cind, dind);
+            hmap.put(idx, new Complex(-1.0/layout.fplan.res, 0.0));
 
-        // // left boundary
-        // for (int j=0;j<layout.fplan.num_length; j++){
-        //     cind = layout.fplan.reg_inds_to_global(0,2*j);
-        //     matrix.setQuick(cind, cind, 1.0);
-        // }
+        }
 
-        // // right boundary
-        // for (int j=0; j<layout.fplan.num_length; j++){
-        //     cind = layout.fplan.reg_inds_to_global(2*(layout.fplan.num_width-1),2*j);
-        //     matrix.setQuick(cind, cind,1.0);
-        // }
+        // bottom boundary
+        for (int i=0; i<layout.fplan.num_width; i++){
+            cind = layout.fplan.reg_inds_to_global(i,0);
+            uind = layout.fplan.reg_inds_to_global(i,1);
+            
+            idx = new IndexPair(cind, cind);
+            hmap.put(idx, new Complex(-1.0/layout.fplan.res, -omega));
+        
+            idx = new IndexPair(cind, uind);
+            hmap.put(idx, new Complex(1.0/layout.fplan.res, 0.0));
+
+        }
+
+        // left boundary
+        for (int j=0;j<layout.fplan.num_length; j++){
+            cind = layout.fplan.reg_inds_to_global(0,j);
+            rind = layout.fplan.reg_inds_to_global(1,j);
+            
+            idx = new IndexPair(cind, cind);
+            hmap.put(idx, new Complex(-1.0/layout.fplan.res, -omega));
+        
+            idx = new IndexPair(cind, rind);
+            hmap.put(idx, new Complex(1.0/layout.fplan.res, 0.0));
+
+        }
+
+        // right boundary
+        for (int j=0; j<layout.fplan.num_length; j++){
+            cind = layout.fplan.reg_inds_to_global(layout.fplan.num_width-1,j);
+            lind = layout.fplan.reg_inds_to_global(layout.fplan.num_width-2,j);
+            
+            idx = new IndexPair(cind, cind);
+            hmap.put(idx, new Complex(1.0/layout.fplan.res, -omega));
+        
+            idx = new IndexPair(cind, lind);
+            hmap.put(idx, new Complex(-1.0/layout.fplan.res, 0.0));
+
+        }
 
         // make a matrix out of the hashmap
         mat = new SDCMatrix(m, m, hmap);
@@ -140,7 +169,7 @@ public class HelmholtzSolver {
 
         // some parameters
         double tol = 1.0e-5;  // tolerance on the residual
-        int itermax = 300;  // max iteration count
+        int itermax = 500;  // max iteration count
 
         // System.out.println("About to MatVec");
         // DCVector soln = mat.MatVec(rhs);
@@ -152,11 +181,12 @@ public class HelmholtzSolver {
         // //*********************************************
         // System.out.println("MatVec done");
 
+        Preconditioner pc = new JacobiPreconditioner(mat);
         DCVector soln = new DCVector(rhs.size());
         BiCGSTAB slvr = new BiCGSTAB();
         slvr.set_max_iters(itermax);
         slvr.set_tolerance(tol);
-        soln = slvr.solve(mat, rhs, soln);
+        soln = slvr.solve(pc, mat, rhs, soln);
 
         // calculate the resulting magnitude
         for (int i=0; i<layout.fplan.num_cells_total; i++){
@@ -180,12 +210,13 @@ public class HelmholtzSolver {
         }
 
         for (int j=layout.fplan.get_num_length()-1; j>=0; j--){
-            for (int i=0; i<layout.fplan.get_num_width(); i++){
+            for (int i=0; i<layout.fplan.get_num_width()-1; i++){
                 cind = layout.fplan.reg_inds_to_global(i,j);
                 System.out.print((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
                 System.out.print(",");
             }
-            System.out.println(" ");
+            cind = layout.fplan.reg_inds_to_global(layout.fplan.get_num_width()-1,j);
+            System.out.println((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
         }
         
     }
