@@ -1,6 +1,7 @@
 package helmholtz;
 
 public interface MultiGrid{
+
 	
 	public DCVector restrict(DCVector longvec);
 
@@ -10,7 +11,7 @@ public interface MultiGrid{
 
 	public DCVector smooth(DCVector coarsevec);
 
-	public boolean isFine();
+	public int numpoints();
 
-	public boolean isCoarse();
+
 }
