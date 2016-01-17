@@ -181,7 +181,8 @@ public class HelmholtzSolver {
         // //*********************************************
         // System.out.println("MatVec done");
 
-        Preconditioner pc = new JacobiPreconditioner(mat);
+        Preconditioner pc = new MGPreconditioner(layout.fplan.get_num_width(), layout.fplan.get_num_length(), layout.fplan.res);
+        //Preconditioner pc = new JacobiPreconditioner(mat);
         DCVector soln = new DCVector(rhs.size());
         BiCGSTAB slvr = new BiCGSTAB();
         slvr.set_max_iters(itermax);

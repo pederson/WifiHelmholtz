@@ -106,6 +106,15 @@ public class Complex extends Object {
     public Complex times(Complex w) {
         return new Complex(x*w.real()-y*w.imag(),x*w.imag()+y*w.real());
     }
+
+    /*
+        Complex multiplication by double
+        @param w is the number to multiply by.
+        @return z*w where z is this Complex number.
+    */
+    public Complex times(double w) {
+        return new Complex(x*w,y*w);
+    }
     
     /*
         Division of Complex numbers (doesn't change this Complex number).

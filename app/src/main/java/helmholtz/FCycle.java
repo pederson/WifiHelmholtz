@@ -1,18 +1,25 @@
 package helmholtz;
 
+import java.util.Vector;
+
 public class FCycle{
 	protected Vector<LexGrid> grids;
 	protected int n1, n2;
+	protected int nlevels;
 
-	FCycle(LexGrid gfine, int nlevels, int nu1, int nu2){
+	FCycle(LexGrid gfine, int nlev, int nu1, int nu2){
+		nlevels = nlev;
 		grids = new Vector<LexGrid>(nlevels+1);
+		for (int i=0; i<=nlevels; i++){
+			grids.addElement(gfine);
+		}
 
 		// create multigrids
-		grids.add(nlevels, gfine);
+		grids.set(nlevels, gfine);
 		LexGrid g;
 		for (int i=nlevels; i>0; i--){
 			g = grids.get(i).coarsen();
-			grids.add(i-1, g);
+			grids.set(i-1, g);
 		}
 
 		// number of smoothing steps parameters
@@ -22,8 +29,8 @@ public class FCycle{
 
 	public DCVector solve(DCVector vec){
 		DCVector err, sln, resid;
-		DCVector v = vec.copy();	// rhs vector
-		DCVector bl;
+		//DCVector v = vec.copy();	// rhs vector
+		DCVector bl, rhs;
 
 		// initial solution assumed to be zero at all levels
 		Vector<DCVector> solns = new Vector<DCVector>(nlevels+1);
@@ -33,28 +40,33 @@ public class FCycle{
 			solns.add(bl);
 		}
 
+		// rhs
+		Vector<DCVector> rhss = new Vector<DCVector>(nlevels+1);
+		rhss.set(nlevels, vec.copy());
+
 		// initial descent to the bottom level
 		LexGrid g;
 		for (int l=nlevels; l>0; l++){
 			g = grids.get(l);
 			sln = solns.get(l);
+			rhs = rhss.get(l);
 
 			// pre-smooth the solution
-			sln = g.smooth(sln);
+			sln = g.smooth(sln, rhs, n1);
 
 			// compute residual
-			resid = v.minus(apply_operator(l, sln));
+			resid = rhs.minus(apply_operator(l, sln));
 
 			// restrict the residual
 			err = g.restrict(resid);
 
 			// the restricted residual becomes the new RHS
-			v = resid;
+			rhss.set(l-1, err);
 		}
 
 		// solve at the bottom
 		g = grids.get(0);
-		solns.get(0) = g.solve(v);
+		solns.set(0, g.solve(rhss.get(0)));
 
 		// cycle upwards with increasing reach
 		for (int l=1; l<nlevels; l++){
@@ -63,6 +75,7 @@ public class FCycle{
 			for (int u=1; u<=l; u++){
 				g = grids.get(u);
 				sln = solns.get(u);
+				rhs = rhss.get(u);
 
 				// interpolate the error
 				err = g.interpolate(solns.get(u-1));
@@ -71,7 +84,7 @@ public class FCycle{
 				sln = sln.plus(err);
 
 				// post-smooth
-				sln = g.smooth(sln);
+				sln = g.smooth(sln, rhs, n2);
 
 			}
 
@@ -79,30 +92,32 @@ public class FCycle{
 			for (int d=l; d>0; d--){
 				g = grids.get(d);
 				sln = solns.get(d);
+				rhs = rhss.get(d);
 
 				// pre-smooth the solution
-				sln = g.smooth(sln);
+				sln = g.smooth(sln, rhs, n1);
 
 				// compute residual
-				resid = v.minus(apply_operator(l, sln));
+				resid = rhs.minus(apply_operator(l, sln));
 
 				// restrict the residual
 				err = g.restrict(resid);
 
 				// the restricted residual becomes the new RHS
-				v = resid;
+				rhss.set(d-1, err);
 
 			}
 
 			// solve at the bottom
 			g = grids.get(0);
-			solns.get(0) = g.solve(v);
+			solns.set(0, g.solve(rhss.get(0)));
 		}
 
 		// make final ascent to the top level
 		for (int u=1; u<=nlevels; u++){
 				g = grids.get(u);
 				sln = solns.get(u);
+				rhs = rhss.get(u);
 
 				// interpolate the error
 				err = g.interpolate(solns.get(u-1));
@@ -111,7 +126,7 @@ public class FCycle{
 				sln = sln.plus(err);
 
 				// post-smooth
-				sln = g.smooth(sln);
+				sln = g.smooth(sln, rhs, n2);
 
 		}
 
@@ -134,7 +149,8 @@ public class FCycle{
 		}
 
 		// apply operator
-		//outr = 
+		// THIS IS WRONG!!!
+		outr = ivec;
 
 		rvec = outr;
 		// restrict back to original level
@@ -143,6 +159,7 @@ public class FCycle{
 			rvec = g.restrict(rvec);
 		}
 
+		return rvec;
 	}
 
 }

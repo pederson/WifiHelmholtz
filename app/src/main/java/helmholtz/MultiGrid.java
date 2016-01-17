@@ -9,7 +9,7 @@ public interface MultiGrid{
 
 	public DCVector solve(DCVector vec);
 
-	public DCVector smooth(DCVector coarsevec);
+	public DCVector smooth(DCVector roughvec, DCVector rhs, int ntimes);
 
 	public int numpoints();
 
