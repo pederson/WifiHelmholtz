@@ -30,55 +30,78 @@ public class FCycle{
 	public DCVector solve(DCVector vec){
 		DCVector err, sln, resid;
 		//DCVector v = vec.copy();	// rhs vector
-		DCVector bl, rhs;
+		DCVector bl, rhs, tmp;
 
 		// initial solution assumed to be zero at all levels
 		Vector<DCVector> solns = new Vector<DCVector>(nlevels+1);
-		for (int l=nlevels; l>=0; l--){
+		for (int l=0; l<=nlevels; l++){
 			bl = new DCVector(grids.get(l).numpoints());
 			bl.assign(new Complex(0, 0));
-			solns.add(bl);
+			solns.addElement(bl);
 		}
 
 		// rhs
 		Vector<DCVector> rhss = new Vector<DCVector>(nlevels+1);
+		for (int i=0; i<=nlevels; i++) rhss.addElement(vec);
 		rhss.set(nlevels, vec.copy());
 
 		// initial descent to the bottom level
 		LexGrid g;
-		for (int l=nlevels; l>0; l++){
+		for (int l=nlevels; l>0; l--){
+			System.out.println(" ");
+			System.out.println("level: "+l);
 			g = grids.get(l);
 			sln = solns.get(l);
 			rhs = rhss.get(l);
 
+			
+			System.out.println("rows: "+g.rows()+" cols: "+g.cols());
+			System.out.println("rhs size: "+rhs.size());
+
+			System.out.println("rough: "+sln.size());
 			// pre-smooth the solution
 			sln = g.smooth(sln, rhs, n1);
+			System.out.println("finished smooth");
 
 			// compute residual
-			resid = rhs.minus(apply_operator(l, sln));
+			//System.out.println("rhs size: "+rhs.size());
+			tmp = apply_operator(l, sln);
+			//System.out.println("tmpsize: "+tmp.size());
+			resid = rhs.minus(tmp);
+			System.out.println("finished resid");
 
 			// restrict the residual
 			err = g.restrict(resid);
+			System.out.println("finished restrict");
+			System.out.println("restrictsize: "+err.size());
 
 			// the restricted residual becomes the new RHS
 			rhss.set(l-1, err);
+			System.out.println("set new rhs");
 		}
 
 		// solve at the bottom
 		g = grids.get(0);
+		System.out.println(" ");
+		System.out.println("rhs0: "+rhss.get(0).size());
 		solns.set(0, g.solve(rhss.get(0)));
+		System.out.println("soln0: "+solns.get(0).size());
 
 		// cycle upwards with increasing reach
 		for (int l=1; l<nlevels; l++){
 
 			// ascend
+			System.out.println(" ");
+			System.out.println("Ascending...");
 			for (int u=1; u<=l; u++){
+				System.out.println(" ");
+				System.out.println("level: "+u);
 				g = grids.get(u);
 				sln = solns.get(u);
 				rhs = rhss.get(u);
 
 				// interpolate the error
-				err = g.interpolate(solns.get(u-1));
+				err = grids.get(u-1).interpolate(solns.get(u-1));
 
 				// update the solution with error
 				sln = sln.plus(err);
@@ -89,7 +112,11 @@ public class FCycle{
 			}
 
 			// descend
+			System.out.println(" ");
+			System.out.println("Descending...");
 			for (int d=l; d>0; d--){
+				System.out.println(" ");
+				System.out.println("level: "+d);
 				g = grids.get(d);
 				sln = solns.get(d);
 				rhs = rhss.get(d);
@@ -98,7 +125,7 @@ public class FCycle{
 				sln = g.smooth(sln, rhs, n1);
 
 				// compute residual
-				resid = rhs.minus(apply_operator(l, sln));
+				resid = rhs.minus(apply_operator(d, sln));
 
 				// restrict the residual
 				err = g.restrict(resid);
@@ -108,6 +135,7 @@ public class FCycle{
 
 			}
 
+			System.out.println("***** LEVEL 0 *****");
 			// solve at the bottom
 			g = grids.get(0);
 			solns.set(0, g.solve(rhss.get(0)));
@@ -120,7 +148,7 @@ public class FCycle{
 				rhs = rhss.get(u);
 
 				// interpolate the error
-				err = g.interpolate(solns.get(u-1));
+				err = grids.get(u-1).interpolate(solns.get(u-1));
 
 				// update the solution with error
 				sln = sln.plus(err);
@@ -139,7 +167,7 @@ public class FCycle{
 
 		LexGrid g;
 		DCVector rvec, ivec, outr;
-		int nlevels = grids.size()-1;
+		//int nlevels = grids.size();
 
 		ivec = vec;
 		// interpolate up to top level
@@ -155,10 +183,12 @@ public class FCycle{
 		rvec = outr;
 		// restrict back to original level
 		for (int l=nlevels; l>level; l--){
+			//System.out.println("restrict level:"+l);
 			g = grids.get(l);
 			rvec = g.restrict(rvec);
 		}
 
+		//System.out.println("rvec: "+rvec.size());
 		return rvec;
 	}
 

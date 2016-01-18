@@ -6,24 +6,24 @@ import java.util.Vector;
  * Dense Double Complex Matrix implementation
 */
 public class DDCMatrix extends Object{
-	private Vector<Complex> values;
+	private Complex[] values;
 	private int mrows, ncols;	// matrix dimensions
 
 	public DDCMatrix(int m, int n){
 		mrows = m;
 		ncols = n;
 
-		values = new Vector<Complex>(mrows*ncols);
+		values = new Complex[mrows*ncols];
 	}
 
 	public DDCMatrix(int m, int n, Complex z){
 		mrows = m;
 		ncols = n;
 
-		values = new Vector<Complex>(mrows*ncols);
+		values = new Complex[mrows*ncols];
 
 		for (int i=0; i<mrows*ncols; i++){
-			values.set(i, z.copy());
+			values[i] = z.copy();
 		}
 	}
 
@@ -31,11 +31,11 @@ public class DDCMatrix extends Object{
 		mrows = mat.rows();
 		ncols = mat.cols();
 
-		values = new Vector<Complex>(mrows*ncols);
+		values = new Complex[mrows*ncols];
 
 		for (int i=0; i<mrows; i++){
 			for (int j=0; j<ncols; j++){
-				put(i, j, mat.at(i, j).copy());
+				values[j*ncols+i] = mat.at(i, j).copy();
 			}
 		}
 	}
@@ -48,11 +48,11 @@ public class DDCMatrix extends Object{
 	public int cols(){return ncols;};
 
 	public void put(int i, int j, Complex z){
-		values.set(j*ncols +i, z);
+		values[j*ncols +i] = z;
 	}
 
 	public Complex at(int i, int j){
-		return values.get(j*ncols+i);
+		return values[j*ncols+i];
 	}
 
 }

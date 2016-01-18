@@ -23,34 +23,41 @@ public class LexGrid implements MultiGrid{
 		return subgrid;
 	}
 
+	public int rows(){return mrows;};
+	public int cols(){return ncols;};
+
 	public int numpoints(){
 		return mrows*ncols;
 	}
 
+	// restricts a grid of points onto a grid with
+	// half as many points in each direction
+	// Full weighting is used
 	public DCVector restrict(DCVector longvec){
 
 		int newrows, newcols;
 		Complex c, u, d, l, r, ul, ur, dl, dr;
 		Complex sum;
 
-		newrows = (mrows-1)/2+1;
-		newcols = (ncols-1)/2+1;
+		newrows = (mrows+1)/2;
+		newcols = (ncols+1)/2;
 		DCVector out = new DCVector(newrows*newcols);
 
 		// apply full weighting for interior points
 		// and injection for boundary points
 		for (int i=1; i<newrows-1; i++){
 			for (int j=1; j<newcols-1; j++){
+				//System.out.println("i,j: "+i+","+j);
 
-				c = longvec.at(2*j*ncols + 2*i);
-				u = longvec.at((2*j+1)*ncols + 2*i);
-				d = longvec.at((2*j-1)*ncols + 2*i);
-				l = longvec.at((2*j)*ncols + 2*i-1);
-				r = longvec.at((2*j)*ncols + 2*i+1);
-				ul = longvec.at((2*j+1)*ncols + 2*i-1);
-				ur = longvec.at((2*j+1)*ncols + 2*i+1);
-				dl = longvec.at((2*j-1)*ncols + 2*i-1);
-				dr = longvec.at((2*j-1)*ncols + 2*i+1);
+				c = longvec.at(2*j*newcols + 2*i);
+				u = longvec.at((2*j+1)*newcols + 2*i);
+				d = longvec.at((2*j-1)*newcols + 2*i);
+				l = longvec.at((2*j)*newcols + 2*i-1);
+				r = longvec.at((2*j)*newcols + 2*i+1);
+				ul = longvec.at((2*j+1)*newcols + 2*i-1);
+				ur = longvec.at((2*j+1)*newcols + 2*i+1);
+				dl = longvec.at((2*j-1)*newcols + 2*i-1);
+				dr = longvec.at((2*j-1)*newcols + 2*i+1);
 
 
 				sum = c.times(0.25);
@@ -68,18 +75,18 @@ public class LexGrid implements MultiGrid{
 		}
 
 		// top boundary
-		for (int i=1; i<newrows-1; i++){
+		for (int i=0; i<newrows; i++){
 			for (int j=newcols-1; j<=newcols-1; j++){
-				c = longvec.at(2*j*ncols + 2*i);
+				c = longvec.at(2*j*newcols + 2*i);
 				sum = c.times(1.0);
 				out.put(j*newcols+i, sum);
 			}
 		}
 
 		// bottom boundary
-		for (int i=1; i<newrows-1; i++){
+		for (int i=0; i<newrows; i++){
 			for (int j=0; j<=0; j++){
-				c = longvec.at(2*j*ncols + 2*i);
+				c = longvec.at(2*j*newcols + 2*i);
 				sum = c.times(1.0);
 				out.put(j*newcols+i, sum);
 			}
@@ -87,8 +94,8 @@ public class LexGrid implements MultiGrid{
 
 		// left boundary
 		for (int i=0; i<=0; i++){
-			for (int j=newcols-1; j<=newcols-1; j++){
-				c = longvec.at(2*j*ncols + 2*i);
+			for (int j=0; j<newcols; j++){
+				c = longvec.at(2*j*newcols + 2*i);
 				sum = c.times(1.0);
 				out.put(j*newcols+i, sum);
 			}
@@ -96,8 +103,8 @@ public class LexGrid implements MultiGrid{
 
 		// right boundary
 		for (int i=newrows-1; i<=newrows-1; i++){
-			for (int j=newcols-1; j<=newcols-1; j++){
-				c = longvec.at(2*j*ncols + 2*i);
+			for (int j=0; j<newcols; j++){
+				c = longvec.at(2*j*newcols + 2*i);
 				sum = c.times(1.0);
 				out.put(j*newcols+i, sum);
 			}
@@ -106,6 +113,8 @@ public class LexGrid implements MultiGrid{
 		return out;
 	}
 
+	// interpolates a grid of points from this grid onto 
+	// a grid that has twice as many points
 	public DCVector interpolate(DCVector shortvec){
 
 		int newrows, newcols;
@@ -115,13 +124,18 @@ public class LexGrid implements MultiGrid{
 		newrows = mrows*2-1;
 		newcols = ncols*2-1;
 		DCVector out = new DCVector(newrows*newcols);
+		out.assign(new Complex(0,0));
+
+		System.out.println("shortvec: "+shortvec.size());
+		System.out.println("rows: "+mrows+" cols: "+ncols);
+		System.out.println("newrows: "+newrows+" newcols: "+newcols);
 
 		// exact interpolation at coarse grid points
 		for (int i=0; i<mrows; i++){
 			for (int j=0; j<ncols; j++){
-
+				//System.out.println("loc:"+(j*ncols+i));
 				// equivalent fine grid point
-				out.put(2*j*ncols+2*i, shortvec.at(j*ncols+i).copy());
+				out.put(2*j*newcols+2*i, shortvec.at(j*ncols+i).copy());
 
 			}
 		}
@@ -246,12 +260,15 @@ public class LexGrid implements MultiGrid{
 		Complex u, d, l, r;
 		Complex tmp;
 		DCVector prev = rough;
-		DCVector sm = new DCVector(rough.size());
+		DCVector sm = rough.copy();//new DCVector(rough.size());
+		//System.out.println("roughsize: "+rough.size());
+		//System.out.println("rhssize: "+rhs.size());
 
 		for (int iter=1; iter<=ntimes; iter++){
 
 			for (int i=1; i<mrows-1; i++){
 				for (int j=1; j<ncols-1; j++){
+					//System.out.println("(i,j): "+i+", "+j);
 
 					// add left, right, up, down
 					u = prev.at((j+1)*ncols + i);

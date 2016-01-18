@@ -11,9 +11,9 @@ public class MGPreconditioner implements Preconditioner{
 		int shortdim = Math.min(rows, cols);
 		int dim = shortdim;
 		int nlevels = 0;
-		while (dim >1){
+		while (dim >3){
 			nlevels++;
-			dim = (dim-1)/2+1;
+			dim = (dim+1)/2;
 		}
 
 		fc = new FCycle(finegrid, nlevels, 1, 1);
@@ -24,7 +24,7 @@ public class MGPreconditioner implements Preconditioner{
 	}
 
 	public DCVector multiplyRight(DCVector vec){
-		return multiply(vec);
+		return vec;
 	}
 
 	public DCVector multiply(DCVector vec){
@@ -36,7 +36,7 @@ public class MGPreconditioner implements Preconditioner{
 	}
 
 	public DCVector solveRight(DCVector vec){
-		return solve(vec);
+		return vec;
 	}
 
 	public DCVector solve(DCVector vec){

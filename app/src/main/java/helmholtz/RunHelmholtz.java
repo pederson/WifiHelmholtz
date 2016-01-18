@@ -6,7 +6,7 @@ public class RunHelmholtz{
 	public static void main(String args[]){
 
 		//FloorPlan fplan = new FloorPlan(5.0, 5.0, 0.00625, "TestPlan");
-		FloorPlan fplan = new FloorPlan(0.5, 0.5, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(0.80625, 0.80625, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
 		// fill in concrete on the borders
@@ -29,6 +29,12 @@ public class RunHelmholtz{
 				fplan.set_pixel_material(1, ihi, j);
 			}
 
+		}
+
+		int val = 3;
+		for (int i=1; i<20; i++){
+			val = 2*val-1;
+			System.out.println("level: "+i+" npts: "+val);
 		}
 
 		// // add a "doorway" 3/4 of the way to the top
