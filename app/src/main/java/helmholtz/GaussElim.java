@@ -18,6 +18,19 @@ public class GaussElim{
 		DCVector bp = b.copy();
 		DDCMatrix U = A.copy();
 
+		// for (int i=0; i<r; i++){
+		// 	System.out.print("mat: ");
+		// 	for (int j=0; j<c; j++){
+		// 		System.out.print(""+U.at(i,j)+",");
+		// 	}
+		// 	System.out.println(" ");
+
+		// }
+
+		// for (int i=0; i<b.size(); i++){
+		// 	System.out.println("rhs: "+b.at(i));
+		// }
+
 		// forward elimination
 		for (int k=0; k<r-1; k++){
 			for (int i=k+1; i<r; i++){

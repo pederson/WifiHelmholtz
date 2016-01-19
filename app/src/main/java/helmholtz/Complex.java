@@ -87,6 +87,10 @@ public class Complex extends Object {
     public Complex plus(Complex w) {
         return new Complex(x+w.real(),y+w.imag());
     }
+
+    public Complex plus(double w) {
+        return new Complex(x+w,y);
+    }
     
     /*
         Subtraction of Complex numbers (doesn't change this Complex number).

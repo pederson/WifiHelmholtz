@@ -97,20 +97,24 @@ public class HelmholtzSolver {
         fillRHS();
 
         // some parameters
-        double tol = 1.0e-4;  // tolerance on the residual
-        int itermax = 1000;  // max iteration count
+        double tol = 1.0e-3;  // tolerance on the residual
+        int itermax = 500;  // max iteration count
 
-        // heavily damped operator PC
+        // // heavily damped operator PC
         // DCVector kvec = hOp.getKsq();
         // DCVector knew = kvec.times(new Complex(1.0, -0.5));
         // HelmholtzOperator2D pcOp = new HelmholtzOperator2D(hOp.getGrid(), layout.wsource.freqHz, knew);
-        // Preconditioner pc = new MGPreconditioner(pcOp);
-        Preconditioner pc = new JacobiPreconditioner(mat);
-        DCVector soln = new DCVector(rhs.size());
-        BiCGSTAB slvr = new BiCGSTAB();
-        slvr.set_max_iters(itermax);
-        slvr.set_tolerance(tol);
-        soln = slvr.solve(pc, mat, rhs, soln);
+        // //Preconditioner pc = new MGPreconditioner(pcOp);
+        // Preconditioner pc = new JacobiPreconditioner(mat);
+        // DCVector soln = new DCVector(rhs.size());
+        // BiCGSTAB slvr = new BiCGSTAB();
+        // slvr.set_max_iters(itermax);
+        // slvr.set_tolerance(tol);
+        // soln = slvr.solve(pc, mat, rhs, soln);
+
+        // direct solver
+        GaussElim gel = new GaussElim();
+        DCVector soln = gel.solve(hOp, rhs);
 
         // calculate the resulting magnitude
         for (int i=0; i<layout.fplan.num_cells_total; i++){

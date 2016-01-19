@@ -57,7 +57,7 @@ public class HelmholtzOperator2D implements FDOperator{
 		IndexPair idx = new IndexPair(0,0);
 
 		DDCMatrix mat = new DDCMatrix(m, m, new Complex(0,0));
-		Complex val;
+        Complex val = new Complex(-1.0 / Math.pow(dx,2), 0.0);
 
 		for (int i=1; i<wid-1; i++){
 			for (int j=1; j<hei-1; j++){
@@ -71,12 +71,11 @@ public class HelmholtzOperator2D implements FDOperator{
                 // set the HashMap values
                 // center
                 idx = new IndexPair(cind, cind);
-                mat.put(idx, kv.at(cind));
+                mat.put(idx, (kv.at(cind).times(-1.0)).plus(4.0/(dx*dx)));
 
                 // left
                 idx = new IndexPair(cind, lind);
-                val = new Complex(1.0 / Math.pow(dx,2), 0.0);
-                mat.put(idx, val);
+                mat.put(idx, val.copy());
 
                 // right
                 idx = new IndexPair(cind, rind);
@@ -101,7 +100,7 @@ public class HelmholtzOperator2D implements FDOperator{
 
 		// FIRST ORDER absorbing boundaries
         // top boundary
-        for (int i=0; i<wid; i++){
+        for (int i=0; i<wid-1; i++){
 
             cind = inds_to_global(i,hei-1);
             dind = inds_to_global(i,hei-2);
@@ -115,7 +114,7 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // bottom boundary
-        for (int i=0; i<wid; i++){
+        for (int i=1; i<wid; i++){
             cind = inds_to_global(i,0);
             uind = inds_to_global(i,1);
             
@@ -128,7 +127,7 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // left boundary
-        for (int j=0;j<hei; j++){
+        for (int j=0;j<hei-1; j++){
             cind = inds_to_global(0,j);
             rind = inds_to_global(1,j);
             
@@ -141,7 +140,7 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // right boundary
-        for (int j=0; j<hei; j++){
+        for (int j=1; j<hei; j++){
             cind = inds_to_global(wid-1,j);
             lind = inds_to_global(wid-2,j);
             
@@ -168,7 +167,7 @@ public class HelmholtzOperator2D implements FDOperator{
         HashMap hmap = new HashMap<IndexPair, Complex>(5*m);
 
         IndexPair idx = new IndexPair(0,0);
-        Complex val = new Complex(1.0 / Math.pow(dx,2), 0.0);;
+        Complex val = new Complex(-1.0 / Math.pow(dx,2), 0.0);
 
         int cind, lind, rind, uind, dind, exind;
         
@@ -184,7 +183,7 @@ public class HelmholtzOperator2D implements FDOperator{
                 // set the HashMap values
                 // center
                 idx = new IndexPair(cind, cind);
-                hmap.put(idx, kv.at(cind));
+                hmap.put(idx, (kv.at(cind).times(-1.0)).plus(4.0/(dx*dx)));
 
                 // left
                 idx = new IndexPair(cind, lind);
@@ -206,14 +205,11 @@ public class HelmholtzOperator2D implements FDOperator{
 
         // FIRST ORDER absorbing boundaries
         // top boundary
-        for (int i=0; i<wid; i++){
+        for (int i=0; i<wid-1; i++){
 
             cind = inds_to_global(i,hei-1);
             dind = inds_to_global(i,hei-2);
 
-            // idx = new IndexPair(cind, cind);
-            // hmap.put(idx, new Complex(1.0, 0.0));
-            
             idx = new IndexPair(cind, cind);
             hmap.put(idx, new Complex(1.0/dx, -omega/c0));
         
@@ -223,13 +219,10 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // bottom boundary
-        for (int i=0; i<wid; i++){
+        for (int i=1; i<wid; i++){
             cind = inds_to_global(i,0);
             uind = inds_to_global(i,1);
 
-            // idx = new IndexPair(cind, cind);
-            // hmap.put(idx, new Complex(1.0, 0.0));
-            
             idx = new IndexPair(cind, cind);
             hmap.put(idx, new Complex(-1.0/dx, -omega/c0));
         
@@ -239,13 +232,10 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // left boundary
-        for (int j=0;j<hei; j++){
+        for (int j=0;j<hei-1; j++){
             cind = inds_to_global(0,j);
             rind = inds_to_global(1,j);
 
-            // idx = new IndexPair(cind, cind);
-            // hmap.put(idx, new Complex(1.0, 0.0));
-            
             idx = new IndexPair(cind, cind);
             hmap.put(idx, new Complex(-1.0/dx, -omega/c0));
         
@@ -255,13 +245,10 @@ public class HelmholtzOperator2D implements FDOperator{
         }
 
         // right boundary
-        for (int j=0; j<hei; j++){
+        for (int j=1; j<hei; j++){
             cind = inds_to_global(wid-1,j);
             lind = inds_to_global(wid-2,j);
 
-            // idx = new IndexPair(cind, cind);
-            // hmap.put(idx, new Complex(1.0, 0.0));
-            
             idx = new IndexPair(cind, cind);
             hmap.put(idx, new Complex(1.0/dx, -omega/c0));
         
