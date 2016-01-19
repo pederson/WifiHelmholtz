@@ -10,6 +10,7 @@ public class HelmholtzSolver {
 
     DCVector rhs;
     SDCMatrix mat;
+    HelmholtzOperator2D hOp;
 
     public HelmholtzSolver(FloorLayout flayout){
         layout = flayout;
@@ -36,8 +37,11 @@ public class HelmholtzSolver {
 
         int m = layout.fplan.num_cells_total;
 
-        // fill out a HashMap with nodes
-        HashMap hmap = new HashMap<IndexPair, Complex>(5*m);
+        // grid 
+        LexGrid grid = new LexGrid(layout.fplan.num_width, layout.fplan.num_length, layout.fplan.res);
+
+        // fill out the k-squared vector
+        DCVector kv = new DCVector(m);
 
         double c0 = 2.99e+8;            // speed of light
         double eps0 = 8.85418782e-12;   // vacuum permittivity
@@ -56,99 +60,24 @@ public class HelmholtzSolver {
         ksq = Math.pow(2.0*Math.PI*layout.wsource.freqHz/c0, 2);
         wsq = Math.pow(omega, 2);
         
-        for (int i=1; i<layout.fplan.num_width-1; i++){
-            for (int j=1; j<layout.fplan.num_length-1; j++){
+        for (int i=0; i<layout.fplan.num_width; i++){
+            for (int j=0; j<layout.fplan.num_length; j++){
 
                 cind = layout.fplan.reg_inds_to_global(i,j);
-                lind = layout.fplan.reg_inds_to_global(i-1,j);
-                rind = layout.fplan.reg_inds_to_global(i+1,j);
-                uind = layout.fplan.reg_inds_to_global(i,j+1);
-                dind = layout.fplan.reg_inds_to_global(i,j-1);
 
                 nsq = Math.pow(layout.fplan.get_permittivity(i,j),2);
                 sigma = layout.fplan.get_conductivity(i,j);
 
-                // set the HashMap values
-                // center
-                idx = new IndexPair(cind, cind);
-                val = new Complex(ksq*nsq - 4.0/Math.pow(layout.fplan.res, 2), -omega*mu0*sigma);
-                hmap.put(idx, val);
+                kv.put(cind, new Complex(ksq*nsq, -omega*mu0*sigma));
 
-                // left
-                idx = new IndexPair(cind, lind);
-                val = new Complex(1.0 / Math.pow(layout.fplan.res,2), 0.0);
-                hmap.put(idx, val);
-
-                // right
-                idx = new IndexPair(cind, rind);
-                hmap.put(idx, val.copy());
-
-                // up
-                idx = new IndexPair(cind, uind);
-                hmap.put(idx, val.copy());
-
-                // down
-                idx = new IndexPair(cind, dind);
-                hmap.put(idx, val.copy());
             }
         }
 
-        // FIRST ORDER absorbing boundaries
-        // top boundary
-        for (int i=0; i<layout.fplan.num_width; i++){
+        // create helmholtz operator
+        hOp = new HelmholtzOperator2D(grid, layout.wsource.freqHz, kv);
 
-            cind = layout.fplan.reg_inds_to_global(i,layout.fplan.num_length-1);
-            dind = layout.fplan.reg_inds_to_global(i,layout.fplan.num_length-2);
-            
-            idx = new IndexPair(cind, cind);
-            hmap.put(idx, new Complex(1.0/layout.fplan.res, -omega));
-        
-            idx = new IndexPair(cind, dind);
-            hmap.put(idx, new Complex(-1.0/layout.fplan.res, 0.0));
-
-        }
-
-        // bottom boundary
-        for (int i=0; i<layout.fplan.num_width; i++){
-            cind = layout.fplan.reg_inds_to_global(i,0);
-            uind = layout.fplan.reg_inds_to_global(i,1);
-            
-            idx = new IndexPair(cind, cind);
-            hmap.put(idx, new Complex(-1.0/layout.fplan.res, -omega));
-        
-            idx = new IndexPair(cind, uind);
-            hmap.put(idx, new Complex(1.0/layout.fplan.res, 0.0));
-
-        }
-
-        // left boundary
-        for (int j=0;j<layout.fplan.num_length; j++){
-            cind = layout.fplan.reg_inds_to_global(0,j);
-            rind = layout.fplan.reg_inds_to_global(1,j);
-            
-            idx = new IndexPair(cind, cind);
-            hmap.put(idx, new Complex(-1.0/layout.fplan.res, -omega));
-        
-            idx = new IndexPair(cind, rind);
-            hmap.put(idx, new Complex(1.0/layout.fplan.res, 0.0));
-
-        }
-
-        // right boundary
-        for (int j=0; j<layout.fplan.num_length; j++){
-            cind = layout.fplan.reg_inds_to_global(layout.fplan.num_width-1,j);
-            lind = layout.fplan.reg_inds_to_global(layout.fplan.num_width-2,j);
-            
-            idx = new IndexPair(cind, cind);
-            hmap.put(idx, new Complex(1.0/layout.fplan.res, -omega));
-        
-            idx = new IndexPair(cind, lind);
-            hmap.put(idx, new Complex(-1.0/layout.fplan.res, 0.0));
-
-        }
-
-        // make a matrix out of the hashmap
-        mat = new SDCMatrix(m, m, hmap);
+        // get sparse matrix
+        mat = hOp.getSparseMatrix();
 
         // System.out.println("matrix dims: "+mat.rows()+" x "+mat.cols());
         // System.out.print("matrix nonzeros: " );
@@ -168,21 +97,15 @@ public class HelmholtzSolver {
         fillRHS();
 
         // some parameters
-        double tol = 1.0e-5;  // tolerance on the residual
-        int itermax = 500;  // max iteration count
+        double tol = 1.0e-4;  // tolerance on the residual
+        int itermax = 1000;  // max iteration count
 
-        // System.out.println("About to MatVec");
-        // DCVector soln = mat.MatVec(rhs);
-        // //***** THIS IS NOT THE ACTUAL SOLUTION *** JUST A TEST
-        // for (int i=0; i<20; i++){
-        //     soln = mat.MatVec(rhs);
-        //     rhs = soln;
-        // }
-        // //*********************************************
-        // System.out.println("MatVec done");
-
-        Preconditioner pc = new MGPreconditioner(layout.fplan.get_num_width(), layout.fplan.get_num_length(), layout.fplan.res);
-        //Preconditioner pc = new JacobiPreconditioner(mat);
+        // heavily damped operator PC
+        // DCVector kvec = hOp.getKsq();
+        // DCVector knew = kvec.times(new Complex(1.0, -0.5));
+        // HelmholtzOperator2D pcOp = new HelmholtzOperator2D(hOp.getGrid(), layout.wsource.freqHz, knew);
+        // Preconditioner pc = new MGPreconditioner(pcOp);
+        Preconditioner pc = new JacobiPreconditioner(mat);
         DCVector soln = new DCVector(rhs.size());
         BiCGSTAB slvr = new BiCGSTAB();
         slvr.set_max_iters(itermax);
@@ -213,11 +136,11 @@ public class HelmholtzSolver {
         for (int j=layout.fplan.get_num_length()-1; j>=0; j--){
             for (int i=0; i<layout.fplan.get_num_width()-1; i++){
                 cind = layout.fplan.reg_inds_to_global(i,j);
-                System.out.print((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
+                System.out.print((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
                 System.out.print(",");
             }
             cind = layout.fplan.reg_inds_to_global(layout.fplan.get_num_width()-1,j);
-            System.out.println((int)(9*(solution[cind]-solnmin)/(solnmax-solnmin)));
+            System.out.println((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
         }
         
     }

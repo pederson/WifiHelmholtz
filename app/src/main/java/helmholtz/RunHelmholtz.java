@@ -5,37 +5,37 @@ public class RunHelmholtz{
 
 	public static void main(String args[]){
 
-		//FloorPlan fplan = new FloorPlan(5.0, 5.0, 0.00625, "TestPlan");
-		FloorPlan fplan = new FloorPlan(0.80625, 0.80625, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(4.0, 4.0, 0.00625, "TestPlan");
+		//FloorPlan fplan = new FloorPlan(0.80625, 0.80625, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
-		// fill in concrete on the borders
-		// top and bottom ----> 5 layers
-		for (int i=0; i<fplan.get_num_width(); i++){
-			for (int jlow=0; jlow < concretelayers; jlow++){
-				fplan.set_pixel_material(1, i, jlow);
-			}
-			for (int jhi=fplan.get_num_length()-1; jhi>fplan.get_num_length()-1 - concretelayers; jhi--){
-				fplan.set_pixel_material(1, i, jhi);
-			}
+		// // fill in concrete on the borders
+		// // top and bottom ----> 5 layers
+		// for (int i=0; i<fplan.get_num_width(); i++){
+		// 	for (int jlow=0; jlow < concretelayers; jlow++){
+		// 		fplan.set_pixel_material(1, i, jlow);
+		// 	}
+		// 	for (int jhi=fplan.get_num_length()-1; jhi>fplan.get_num_length()-1 - concretelayers; jhi--){
+		// 		fplan.set_pixel_material(1, i, jhi);
+		// 	}
 
-		}
-		// left and right ----> 5 layers
-		for (int j=0; j<fplan.get_num_length(); j++){
-			for (int ilow=0; ilow < concretelayers; ilow++){
-				fplan.set_pixel_material(1, ilow, j);
-			}
-			for (int ihi=fplan.get_num_width()-1; ihi>fplan.get_num_width()-1 - concretelayers; ihi--){
-				fplan.set_pixel_material(1, ihi, j);
-			}
+		// }
+		// // left and right ----> 5 layers
+		// for (int j=0; j<fplan.get_num_length(); j++){
+		// 	for (int ilow=0; ilow < concretelayers; ilow++){
+		// 		fplan.set_pixel_material(1, ilow, j);
+		// 	}
+		// 	for (int ihi=fplan.get_num_width()-1; ihi>fplan.get_num_width()-1 - concretelayers; ihi--){
+		// 		fplan.set_pixel_material(1, ihi, j);
+		// 	}
 
-		}
+		// }
 
-		int val = 3;
-		for (int i=1; i<20; i++){
-			val = 2*val-1;
-			System.out.println("level: "+i+" npts: "+val);
-		}
+		// int val = 3;
+		// for (int i=1; i<20; i++){
+		// 	val = 2*val-1;
+		// 	System.out.println("level: "+i+" npts: "+val);
+		// }
 
 		// // add a "doorway" 3/4 of the way to the top
 		// int j34 = (int)(0.75*(double)fplan.get_num_length());
@@ -67,7 +67,7 @@ public class RunHelmholtz{
 		// add a source in middle of unit
 		WifiSource source = new WifiSource(false, false);
 		flayout.set_source(source);
-		flayout.set_source_location(3*fplan.get_num_width()/4, 3*fplan.get_num_length()/4);
+		flayout.set_source_location(2*fplan.get_num_width()/4, 2*fplan.get_num_length()/4);
 
 		flayout.set_floorplan(fplan);
 

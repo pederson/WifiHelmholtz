@@ -6,20 +6,26 @@ public class FCycle{
 	protected Vector<LexGrid> grids;
 	protected int n1, n2;
 	protected int nlevels;
+	protected FDOperator op0, opl;
 
-	FCycle(LexGrid gfine, int nlev, int nu1, int nu2){
+	FCycle(FDOperator op, int nlev, int nu1, int nu2){
 		nlevels = nlev;
+		opl = op;
+		LexGrid gfine = op.getGrid();
 		grids = new Vector<LexGrid>(nlevels+1);
 		for (int i=0; i<=nlevels; i++){
 			grids.addElement(gfine);
 		}
 
-		// create multigrids
+		// create multigrids and get coarse operator
+		FDOperator ophold = opl;
 		grids.set(nlevels, gfine);
 		LexGrid g;
 		for (int i=nlevels; i>0; i--){
+			op0 = ophold.coarsen();
 			g = grids.get(i).coarsen();
 			grids.set(i-1, g);
+			ophold = op0;
 		}
 
 		// number of smoothing steps parameters
@@ -31,6 +37,7 @@ public class FCycle{
 		DCVector err, sln, resid;
 		//DCVector v = vec.copy();	// rhs vector
 		DCVector bl, rhs, tmp;
+		GaussElim gel = new GaussElim();
 
 		// initial solution assumed to be zero at all levels
 		Vector<DCVector> solns = new Vector<DCVector>(nlevels+1);
@@ -48,54 +55,43 @@ public class FCycle{
 		// initial descent to the bottom level
 		LexGrid g;
 		for (int l=nlevels; l>0; l--){
-			System.out.println(" ");
-			System.out.println("level: "+l);
+			// System.out.println(" ");
+			// System.out.println("level: "+l);
 			g = grids.get(l);
 			sln = solns.get(l);
 			rhs = rhss.get(l);
 
-			
-			System.out.println("rows: "+g.rows()+" cols: "+g.cols());
-			System.out.println("rhs size: "+rhs.size());
 
-			System.out.println("rough: "+sln.size());
 			// pre-smooth the solution
 			sln = g.smooth(sln, rhs, n1);
-			System.out.println("finished smooth");
+			//System.out.println("finished smooth");
 
 			// compute residual
-			//System.out.println("rhs size: "+rhs.size());
 			tmp = apply_operator(l, sln);
-			//System.out.println("tmpsize: "+tmp.size());
 			resid = rhs.minus(tmp);
-			System.out.println("finished resid");
+			//System.out.println("finished resid");
 
 			// restrict the residual
 			err = g.restrict(resid);
-			System.out.println("finished restrict");
-			System.out.println("restrictsize: "+err.size());
+			//System.out.println("finished restrict");
 
 			// the restricted residual becomes the new RHS
 			rhss.set(l-1, err);
-			System.out.println("set new rhs");
+			//System.out.println("set new rhs");
 		}
 
-		// solve at the bottom
-		g = grids.get(0);
-		System.out.println(" ");
-		System.out.println("rhs0: "+rhss.get(0).size());
-		solns.set(0, g.solve(rhss.get(0)));
-		System.out.println("soln0: "+solns.get(0).size());
+		// solve at the bottom by gaussian elimination
+		solns.set(0, gel.solve(op0, rhss.get(0)));
 
 		// cycle upwards with increasing reach
 		for (int l=1; l<nlevels; l++){
 
 			// ascend
-			System.out.println(" ");
-			System.out.println("Ascending...");
+			// System.out.println(" ");
+			// System.out.println("Ascending...");
 			for (int u=1; u<=l; u++){
-				System.out.println(" ");
-				System.out.println("level: "+u);
+				// System.out.println(" ");
+				// System.out.println("level: "+u);
 				g = grids.get(u);
 				sln = solns.get(u);
 				rhs = rhss.get(u);
@@ -112,11 +108,11 @@ public class FCycle{
 			}
 
 			// descend
-			System.out.println(" ");
-			System.out.println("Descending...");
+			// System.out.println(" ");
+			// System.out.println("Descending...");
 			for (int d=l; d>0; d--){
-				System.out.println(" ");
-				System.out.println("level: "+d);
+				// System.out.println(" ");
+				// System.out.println("level: "+d);
 				g = grids.get(d);
 				sln = solns.get(d);
 				rhs = rhss.get(d);
@@ -135,10 +131,8 @@ public class FCycle{
 
 			}
 
-			System.out.println("***** LEVEL 0 *****");
-			// solve at the bottom
-			g = grids.get(0);
-			solns.set(0, g.solve(rhss.get(0)));
+			// solve at the bottom by gaussian elimination
+			solns.set(0, gel.solve(op0, rhss.get(0)));
 		}
 
 		// make final ascent to the top level
@@ -177,8 +171,7 @@ public class FCycle{
 		}
 
 		// apply operator
-		// THIS IS WRONG!!!
-		outr = ivec;
+		outr = opl.multiply(ivec);
 
 		rvec = outr;
 		// restrict back to original level

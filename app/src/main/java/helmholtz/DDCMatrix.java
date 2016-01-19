@@ -51,6 +51,10 @@ public class DDCMatrix extends Object{
 		values[j*ncols +i] = z;
 	}
 
+	public void put(IndexPair idx, Complex z){
+		values[idx.j*ncols+idx.i] = z;
+	}
+
 	public Complex at(int i, int j){
 		return values[j*ncols+i];
 	}

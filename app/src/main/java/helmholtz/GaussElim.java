@@ -7,6 +7,10 @@ public class GaussElim{
 
 	}
 
+	public DCVector solve(Operator op, DCVector b){
+		return solve(op.getDenseMatrix(), b);
+	}
+
 	public DCVector solve(DDCMatrix A, DCVector b){
 		int r = A.rows();
 		int c = A.cols();

@@ -4,11 +4,11 @@ public class MGPreconditioner implements Preconditioner{
 	private LexGrid finegrid;
 	private FCycle fc;
 
-	public MGPreconditioner(int rows, int cols, double dx){
-		finegrid = new LexGrid(rows, cols, dx);
+	public MGPreconditioner(FDOperator op){
+		finegrid = op.getGrid();
 
 		// how many levels
-		int shortdim = Math.min(rows, cols);
+		int shortdim = Math.min(finegrid.rows(), finegrid.cols());
 		int dim = shortdim;
 		int nlevels = 0;
 		while (dim >3){
@@ -16,7 +16,7 @@ public class MGPreconditioner implements Preconditioner{
 			dim = (dim+1)/2;
 		}
 
-		fc = new FCycle(finegrid, nlevels, 1, 1);
+		fc = new FCycle(op, nlevels, 1, 1);
 	}
 	
 	public DCVector multiplyLeft(DCVector vec){

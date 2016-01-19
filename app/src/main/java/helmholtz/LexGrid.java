@@ -1,9 +1,6 @@
 package helmholtz;
 
-public class LexGrid implements MultiGrid{
-	protected LexGrid supergrid;	// finer grid
-	protected LexGrid subgrid;		// coarser grid
-	protected int level;			// the grid coarseness depth level
+public class LexGrid extends Object{
 	protected int mrows, ncols;
 	protected double dx;			// grid spacing
 
@@ -25,6 +22,7 @@ public class LexGrid implements MultiGrid{
 
 	public int rows(){return mrows;};
 	public int cols(){return ncols;};
+	public double res(){return dx;};
 
 	public int numpoints(){
 		return mrows*ncols;
@@ -126,9 +124,9 @@ public class LexGrid implements MultiGrid{
 		DCVector out = new DCVector(newrows*newcols);
 		out.assign(new Complex(0,0));
 
-		System.out.println("shortvec: "+shortvec.size());
-		System.out.println("rows: "+mrows+" cols: "+ncols);
-		System.out.println("newrows: "+newrows+" newcols: "+newcols);
+		// System.out.println("shortvec: "+shortvec.size());
+		// System.out.println("rows: "+mrows+" cols: "+ncols);
+		// System.out.println("newrows: "+newrows+" newcols: "+newcols);
 
 		// exact interpolation at coarse grid points
 		for (int i=0; i<mrows; i++){
@@ -189,69 +187,6 @@ public class LexGrid implements MultiGrid{
 		return out;
 	}
 
-	// solve by direct method
-	// use dense gaussian elimination
-	public DCVector solve(DCVector vec){
-
-		int cind, lind, rind, uind, dind;
-
-		DDCMatrix mat = new DDCMatrix(mrows*ncols, mrows*ncols, new Complex(0,0));
-		for (int i=1; i<mrows-1; i++){
-			for (int j=1; j<ncols-1; j++){
-
-				cind = j*ncols+i;
-                lind = j*ncols+i-1;
-                rind = j*ncols+i+1;
-                uind = (j+1)*ncols+i;
-                dind = (j-1)*ncols+i;
-
-                // THIS IS WRONG!!! 
-				mat.put(cind, cind, new Complex(1.0, 0.0));
-				mat.put(cind, lind, new Complex(1.0/(dx*dx), 0.0));
-				mat.put(cind, rind, new Complex(1.0/(dx*dx), 0.0));
-				mat.put(cind, uind, new Complex(1.0/(dx*dx), 0.0));
-				mat.put(cind, dind, new Complex(1.0/(dx*dx), 0.0));
-			}
-		}
-
-		// boundaries
-		// top boundary
-        for (int i=0; i<mrows; i++){
-
-        	cind = (ncols-1)*ncols + i;
-        	mat.put(cind, cind, new Complex(1.0, 0.0));
-
-        }
-
-        // bottom boundary
-        for (int i=0; i<mrows; i++){
-
-        	cind = (0)*ncols + i;
-        	mat.put(cind, cind, new Complex(1.0, 0.0));
-
-        }
-
-        // left boundary
-        for (int j=0;j<ncols; j++){
-
-        	cind = (j)*ncols + 0;
-        	mat.put(cind, cind, new Complex(1.0, 0.0));
-
-        }
-
-        // right boundary
-        for (int j=0; j<ncols; j++){
-
-        	cind = (j)*ncols + mrows-1;
-        	mat.put(cind, cind, new Complex(1.0, 0.0));
-
-        }
-
-		GaussElim gel = new GaussElim();
-		DCVector soln = gel.solve(mat, vec);
-
-		return soln;
-	}
 
 	// w-Jacobi relaxation as a smoother
 	// u_(m+1) = 0.25*[h^2*f + uleft_m + uright_m + uup_m + udown_m]
