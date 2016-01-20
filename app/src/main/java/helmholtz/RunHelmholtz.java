@@ -5,7 +5,7 @@ public class RunHelmholtz{
 
 	public static void main(String args[]){
 
-		FloorPlan fplan = new FloorPlan(0.25, 0.25, 0.00625, "TestPlan");
+		FloorPlan fplan = new FloorPlan(1.0, 1.0, 0.00625, "TestPlan");
 		//FloorPlan fplan = new FloorPlan(0.80625, 0.80625, 0.00625, "TestPlan");
 		FloorLayout flayout = new FloorLayout();
 		int concretelayers = 5;
@@ -75,6 +75,6 @@ public class RunHelmholtz{
 
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);
 		hsolve.solve();
-		hsolve.print_solution();
+		//hsolve.print_solution();
 	}
 }

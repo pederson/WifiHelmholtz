@@ -117,6 +117,7 @@ public class SDCMatrix extends Object{
 	public DCVector MatVec(DCVector vec){
 		DCVector result = new DCVector(vec.size());
 		Complex czero = new Complex(0.0, 0.0);
+		result.assign(czero);
 
 		for (int i=0; i<ncols; i++){
 			result.put(i, czero.copy());

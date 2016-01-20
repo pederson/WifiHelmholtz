@@ -100,21 +100,21 @@ public class HelmholtzSolver {
         double tol = 1.0e-3;  // tolerance on the residual
         int itermax = 500;  // max iteration count
 
-        // // heavily damped operator PC
-        // DCVector kvec = hOp.getKsq();
-        // DCVector knew = kvec.times(new Complex(1.0, -0.5));
-        // HelmholtzOperator2D pcOp = new HelmholtzOperator2D(hOp.getGrid(), layout.wsource.freqHz, knew);
-        // //Preconditioner pc = new MGPreconditioner(pcOp);
-        // Preconditioner pc = new JacobiPreconditioner(mat);
-        // DCVector soln = new DCVector(rhs.size());
-        // BiCGSTAB slvr = new BiCGSTAB();
-        // slvr.set_max_iters(itermax);
-        // slvr.set_tolerance(tol);
-        // soln = slvr.solve(pc, mat, rhs, soln);
+        // heavily damped operator PC
+        DCVector kvec = hOp.getKsq();
+        DCVector knew = kvec.times(new Complex(1.0, -0.5));
+        HelmholtzOperator2D pcOp = new HelmholtzOperator2D(hOp.getGrid(), layout.wsource.freqHz, knew);
+        Preconditioner pc = new MGPreconditioner(pcOp);
+        //Preconditioner pc = new JacobiPreconditioner(mat);
+        DCVector soln = new DCVector(rhs.size());
+        BiCGSTAB slvr = new BiCGSTAB();
+        slvr.set_max_iters(itermax);
+        slvr.set_tolerance(tol);
+        soln = slvr.solve(pc, mat, rhs, soln);
 
         // direct solver
-        GaussElim gel = new GaussElim();
-        DCVector soln = gel.solve(hOp, rhs);
+        // GaussElim gel = new GaussElim();
+        // DCVector soln = gel.solve(hOp, rhs);
 
         // calculate the resulting magnitude
         for (int i=0; i<layout.fplan.num_cells_total; i++){
@@ -130,22 +130,32 @@ public class HelmholtzSolver {
         int cind;
         //System.out.println("Solution: ");
 
-        double solnmax, solnmin;
-        solnmax = solution[0]; solnmin = solution[0];
-        for (int i=1; i<layout.fplan.get_num_length()*layout.fplan.get_num_width(); i++){
-            if (solution[i] > solnmax) solnmax = solution[i];
-            if (solution[i] < solnmin) solnmin = solution[i];
-        }
-
         for (int j=layout.fplan.get_num_length()-1; j>=0; j--){
             for (int i=0; i<layout.fplan.get_num_width()-1; i++){
                 cind = layout.fplan.reg_inds_to_global(i,j);
-                System.out.print((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
+                System.out.print(solution[cind]);
                 System.out.print(",");
             }
             cind = layout.fplan.reg_inds_to_global(layout.fplan.get_num_width()-1,j);
-            System.out.println((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
+            System.out.println(solution[cind]);
         }
+
+        // double solnmax, solnmin;
+        // solnmax = solution[0]; solnmin = solution[0];
+        // for (int i=1; i<layout.fplan.get_num_length()*layout.fplan.get_num_width(); i++){
+        //     if (solution[i] > solnmax) solnmax = solution[i];
+        //     if (solution[i] < solnmin) solnmin = solution[i];
+        // }
+
+        // for (int j=layout.fplan.get_num_length()-1; j>=0; j--){
+        //     for (int i=0; i<layout.fplan.get_num_width()-1; i++){
+        //         cind = layout.fplan.reg_inds_to_global(i,j);
+        //         System.out.print((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
+        //         System.out.print(",");
+        //     }
+        //     cind = layout.fplan.reg_inds_to_global(layout.fplan.get_num_width()-1,j);
+        //     System.out.println((int)(255*(solution[cind]-solnmin)/(solnmax-solnmin)));
+        // }
         
     }
 

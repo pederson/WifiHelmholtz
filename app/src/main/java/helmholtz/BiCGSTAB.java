@@ -39,7 +39,7 @@ public class BiCGSTAB extends Object{
 		while (it < max_iters && resid/resid0 > tol){
 
 			// update some constants
-			rholast = rho;
+			rholast = rho.copy();
 			rho = rhat.dot(r);
 			beta = (rho.div(rholast)).times((alpha.div(omega)));
 
@@ -88,7 +88,7 @@ public class BiCGSTAB extends Object{
 		Complex alpha = rho.copy();
 		Complex omega = rho.copy();
 		Complex beta;
-		Complex rholast = rho.copy();
+		Complex rholast;
 
 		// calculate initial residual magnitude
 		Complex residm = r.dot(r);
@@ -99,7 +99,7 @@ public class BiCGSTAB extends Object{
 		while (it < max_iters && resid/resid0 > tol){
 
 			// update some constants
-			rholast = rho;
+			rholast = rho.copy();
 			rho = rhat.dot(r);
 			beta = (rho.div(rholast)).times((alpha.div(omega)));
 

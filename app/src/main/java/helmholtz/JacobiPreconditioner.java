@@ -21,7 +21,7 @@ public class JacobiPreconditioner implements Preconditioner{
 	 *
 	*/
 	public DCVector multiplyRight(DCVector vec){
-		return vec;
+		return vec.copy();
 	}
 
 

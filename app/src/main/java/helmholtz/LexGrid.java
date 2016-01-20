@@ -194,8 +194,8 @@ public class LexGrid extends Object{
 
 		Complex u, d, l, r;
 		Complex tmp;
-		DCVector prev = rough;
 		DCVector sm = rough.copy();//new DCVector(rough.size());
+		DCVector prev = sm;
 		//System.out.println("roughsize: "+rough.size());
 		//System.out.println("rhssize: "+rhs.size());
 
@@ -214,7 +214,7 @@ public class LexGrid extends Object{
 					tmp = u.plus(d).plus(l).plus(r);
 					tmp = (tmp.plus(rhs.at(j*ncols+i).times(dx*dx))).times(0.25);
 
-					sm.put(j*ncols+i, tmp);
+					sm.put(j*ncols+i, tmp.copy());
 				}
 			}
 
@@ -222,6 +222,17 @@ public class LexGrid extends Object{
 		}
 
 		return sm;
+	}
+
+	public void print_vector(DCVector vec){
+
+		for (int i=0; i<mrows; i++){
+			for (int j=0; j<ncols; j++){
+				System.out.print(vec.at(j*ncols+i));
+				System.out.print(",");
+			}
+			System.out.println(" ");
+		}
 	}
 
 }

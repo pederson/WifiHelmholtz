@@ -39,6 +39,8 @@ public class FCycle{
 		DCVector bl, rhs, tmp;
 		GaussElim gel = new GaussElim();
 
+		grids.get(nlevels).print_vector(vec);
+
 		// initial solution assumed to be zero at all levels
 		Vector<DCVector> solns = new Vector<DCVector>(nlevels+1);
 		for (int l=0; l<=nlevels; l++){
@@ -64,6 +66,8 @@ public class FCycle{
 
 			// pre-smooth the solution
 			sln = g.smooth(sln, rhs, n1);
+			//if (l==nlevels) print_vector(l, rhs);
+
 			//System.out.println("finished smooth");
 
 			// compute residual
@@ -82,6 +86,7 @@ public class FCycle{
 
 		// solve at the bottom by gaussian elimination
 		solns.set(0, gel.solve(op0, rhss.get(0)));
+		//print_vector(0, solns.get(0));
 
 		// cycle upwards with increasing reach
 		for (int l=1; l<nlevels; l++){
@@ -184,5 +189,6 @@ public class FCycle{
 		//System.out.println("rvec: "+rvec.size());
 		return rvec;
 	}
+
 
 }

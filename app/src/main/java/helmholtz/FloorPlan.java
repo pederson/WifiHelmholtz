@@ -48,6 +48,9 @@ public class FloorPlan {
         res = sres;
         num_width = (int)(width/res);
         num_length = (int)(length/res);
+
+        if (num_width%2 == 0) num_width++;
+        if (num_length%2 == 0) num_length++;
         num_cells_total = num_width*num_length;
 
         material = new int[num_cells_total];
