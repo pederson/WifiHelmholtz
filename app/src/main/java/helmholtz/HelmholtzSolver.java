@@ -98,7 +98,7 @@ public class HelmholtzSolver {
 
         // some parameters
         double tol = 1.0e-3;  // tolerance on the residual
-        int itermax = 500;  // max iteration count
+        int itermax = 100;  // max iteration count
 
         // heavily damped operator PC
         DCVector kvec = hOp.getKsq();

@@ -39,7 +39,8 @@ public class FCycle{
 		DCVector bl, rhs, tmp;
 		GaussElim gel = new GaussElim();
 
-		grids.get(nlevels).print_vector(vec);
+		
+		//grids.get(nlevels).print_vector(vec);
 
 		// initial solution assumed to be zero at all levels
 		Vector<DCVector> solns = new Vector<DCVector>(nlevels+1);
@@ -48,6 +49,12 @@ public class FCycle{
 			bl.assign(new Complex(0, 0));
 			solns.addElement(bl);
 		}
+		// System.out.println("initial solutions: ");
+		// for(int i=0; i<=nlevels; i++){
+		// 	sln = solns.get(i);
+		// 	System.out.print("level: "+i);
+		// 	System.out.println(" sln: "+sln.dot(sln).toString());
+		// }
 
 		// rhs
 		Vector<DCVector> rhss = new Vector<DCVector>(nlevels+1);
@@ -63,37 +70,37 @@ public class FCycle{
 			sln = solns.get(l);
 			rhs = rhss.get(l);
 
+			// System.out.println("rhs: "+rhs.dot(rhs).toString());
 
 			// pre-smooth the solution
+			// System.out.println("rough sln: "+sln.dot(sln).toString());
 			sln = g.smooth(sln, rhs, n1);
-			//if (l==nlevels) print_vector(l, rhs);
-
-			//System.out.println("finished smooth");
+			// System.out.println("smoothed sln: "+sln.dot(sln).toString());
+			solns.set(l,sln);
 
 			// compute residual
-			tmp = apply_operator(l, sln);
-			resid = rhs.minus(tmp);
-			//System.out.println("finished resid");
+			// System.out.println("A*x: "+tmp.dot(tmp).toString());
+			resid = rhs.minus(apply_operator(l, sln));
+			// System.out.println("resid: "+resid.dot(resid).toString());
 
 			// restrict the residual
 			err = g.restrict(resid);
-			//System.out.println("finished restrict");
 
+			// update the containers
 			// the restricted residual becomes the new RHS
 			rhss.set(l-1, err);
-			//System.out.println("set new rhs");
+
 		}
 
 		// solve at the bottom by gaussian elimination
 		solns.set(0, gel.solve(op0, rhss.get(0)));
-		//print_vector(0, solns.get(0));
 
 		// cycle upwards with increasing reach
 		for (int l=1; l<nlevels; l++){
 
 			// ascend
 			// System.out.println(" ");
-			// System.out.println("Ascending...");
+			// System.out.println(".....ASCENDING.....");
 			for (int u=1; u<=l; u++){
 				// System.out.println(" ");
 				// System.out.println("level: "+u);
@@ -105,16 +112,22 @@ public class FCycle{
 				err = grids.get(u-1).interpolate(solns.get(u-1));
 
 				// update the solution with error
+				// System.out.println("old sln: "+sln.dot(sln).toString());
 				sln = sln.plus(err);
-
+				
 				// post-smooth
 				sln = g.smooth(sln, rhs, n2);
+				// System.out.println("new sln: "+sln.dot(sln).toString());
+
+
+				// update the containers
+				solns.set(u, sln);
 
 			}
 
 			// descend
 			// System.out.println(" ");
-			// System.out.println("Descending...");
+			// System.out.println(".....DESCENDING.....");
 			for (int d=l; d>0; d--){
 				// System.out.println(" ");
 				// System.out.println("level: "+d);
@@ -122,17 +135,26 @@ public class FCycle{
 				sln = solns.get(d);
 				rhs = rhss.get(d);
 
+				// System.out.println("rhs: "+rhs.dot(rhs).toString());
+
+
 				// pre-smooth the solution
+				// System.out.println("rough sln: "+sln.dot(sln).toString());
 				sln = g.smooth(sln, rhs, n1);
+				// System.out.println("smoothed sln: "+sln.dot(sln).toString());
 
 				// compute residual
 				resid = rhs.minus(apply_operator(d, sln));
+				// System.out.println("resid: "+resid.dot(resid).toString());
+
 
 				// restrict the residual
 				err = g.restrict(resid);
 
+				// update the containers
 				// the restricted residual becomes the new RHS
 				rhss.set(d-1, err);
+				solns.set(d,sln);
 
 			}
 
@@ -154,6 +176,9 @@ public class FCycle{
 
 				// post-smooth
 				sln = g.smooth(sln, rhs, n2);
+
+				// update the containers
+				solns.set(u, sln);
 
 		}
 

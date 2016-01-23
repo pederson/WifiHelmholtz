@@ -74,5 +74,21 @@ public class DCVector extends Object{
 		return out;
 	}
 
+	public void print(){
+		for(int i=0; i<length; i++){
+			System.out.println("i: "+i+" val: "+data[i].toString());
+		}
+	}
+
+	public void print2D(int mrows, int ncols){
+		for (int i=0; i<mrows; i++){
+			for (int j=0; j<ncols; j++){
+				System.out.print(data[j*ncols+i].toString());
+				System.out.print(",");
+			}
+			System.out.println(" ");
+		}
+	}
+
 
 }

@@ -37,25 +37,26 @@ public class LexGrid extends Object{
 		Complex c, u, d, l, r, ul, ur, dl, dr;
 		Complex sum;
 
-		newrows = (mrows+1)/2;
-		newcols = (ncols+1)/2;
+		newrows = (mrows-1)/2+1;
+		newcols = (ncols-1)/2+1;
+		DCVector newvec = longvec.copy();
 		DCVector out = new DCVector(newrows*newcols);
 
 		// apply full weighting for interior points
 		// and injection for boundary points
-		for (int i=1; i<newrows-1; i++){
-			for (int j=1; j<newcols-1; j++){
+		for (int i=1; i<mrows-1; i++){
+			for (int j=1; j<ncols-1; j++){
 				//System.out.println("i,j: "+i+","+j);
 
-				c = longvec.at(2*j*newcols + 2*i);
-				u = longvec.at((2*j+1)*newcols + 2*i);
-				d = longvec.at((2*j-1)*newcols + 2*i);
-				l = longvec.at((2*j)*newcols + 2*i-1);
-				r = longvec.at((2*j)*newcols + 2*i+1);
-				ul = longvec.at((2*j+1)*newcols + 2*i-1);
-				ur = longvec.at((2*j+1)*newcols + 2*i+1);
-				dl = longvec.at((2*j-1)*newcols + 2*i-1);
-				dr = longvec.at((2*j-1)*newcols + 2*i+1);
+				c = longvec.at(j*ncols + i);
+				u = longvec.at((j+1)*ncols + i);
+				d = longvec.at((j-1)*ncols + i);
+				l = longvec.at((j)*ncols + i-1);
+				r = longvec.at((j)*ncols + i+1);
+				ul = longvec.at((j+1)*ncols + i-1);
+				ur = longvec.at((j+1)*ncols + i+1);
+				dl = longvec.at((j-1)*ncols + i-1);
+				dr = longvec.at((j-1)*ncols + i+1);
 
 
 				sum = c.times(0.25);
@@ -68,44 +69,18 @@ public class LexGrid extends Object{
 				sum = sum.plus(dl.times(0.0625));
 				sum = sum.plus(dr.times(0.0625));
 
-				out.put(j*newcols+i, sum);
+				newvec.put(j*ncols+i, sum);
 			}
 		}
 
-		// top boundary
-		for (int i=0; i<newrows; i++){
-			for (int j=newcols-1; j<=newcols-1; j++){
-				c = longvec.at(2*j*newcols + 2*i);
-				sum = c.times(1.0);
-				out.put(j*newcols+i, sum);
+		int ir=0, jr=0;
+		for (int i=0; i<mrows; i+=2){
+			for (int j=0; j<ncols; j+=2){
+				out.put(jr*newcols+ir, newvec.at(j*ncols+i));
+				jr++;
 			}
-		}
-
-		// bottom boundary
-		for (int i=0; i<newrows; i++){
-			for (int j=0; j<=0; j++){
-				c = longvec.at(2*j*newcols + 2*i);
-				sum = c.times(1.0);
-				out.put(j*newcols+i, sum);
-			}
-		}
-
-		// left boundary
-		for (int i=0; i<=0; i++){
-			for (int j=0; j<newcols; j++){
-				c = longvec.at(2*j*newcols + 2*i);
-				sum = c.times(1.0);
-				out.put(j*newcols+i, sum);
-			}
-		}
-
-		// right boundary
-		for (int i=newrows-1; i<=newrows-1; i++){
-			for (int j=0; j<newcols; j++){
-				c = longvec.at(2*j*newcols + 2*i);
-				sum = c.times(1.0);
-				out.put(j*newcols+i, sum);
-			}
+			jr=0;
+			ir++;
 		}
 
 		return out;
@@ -119,8 +94,10 @@ public class LexGrid extends Object{
 		Complex bl, br, tl, tr;
 		Complex interp, im1, im2;
 
-		newrows = mrows*2-1;
-		newcols = ncols*2-1;
+		// newrows = mrows*2-1;
+		// newcols = ncols*2-1;
+		newrows = 2*(mrows-1)+1;
+		newcols = 2*(ncols-1)+1;
 		DCVector out = new DCVector(newrows*newcols);
 		out.assign(new Complex(0,0));
 

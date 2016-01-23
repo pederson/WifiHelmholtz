@@ -75,6 +75,6 @@ public class RunHelmholtz{
 
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);
 		hsolve.solve();
-		//hsolve.print_solution();
+		hsolve.print_solution();
 	}
 }
