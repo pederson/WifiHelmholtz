@@ -98,59 +98,134 @@ public class HelmholtzOperator2D implements FDOperator{
 			}
 		}
 
-		// FIRST ORDER absorbing boundaries
+		// SECOND ORDER absorbing boundaries
+        double kwav = omega/c0;
         // top boundary
-        for (int i=0; i<wid-1; i++){
+        for (int i=1; i<wid-1; i++){
 
             cind = inds_to_global(i,hei-1);
             dind = inds_to_global(i,hei-2);
-            
+            lind = inds_to_global(i-1, hei-1);
+            rind = inds_to_global(i+1, hei-1);
+
             idx = new IndexPair(cind, cind);
-            mat.put(idx, new Complex(1.0/dx, -omega/c0));
+            mat.put(idx, new Complex(1.0/dx, -kwav - 1.0/(kwav*dx*dx)));
         
             idx = new IndexPair(cind, dind);
             mat.put(idx, new Complex(-1.0/dx, 0.0));
 
+            idx = new IndexPair(cind, lind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
+            idx = new IndexPair(cind, rind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
         }
 
         // bottom boundary
-        for (int i=1; i<wid; i++){
+        for (int i=1; i<wid-1; i++){
             cind = inds_to_global(i,0);
             uind = inds_to_global(i,1);
-            
+            lind = inds_to_global(i-1,0);
+            rind = inds_to_global(i+1,0);
+
             idx = new IndexPair(cind, cind);
-            mat.put(idx, new Complex(-1.0/dx, -omega/c0));
+            mat.put(idx, new Complex(-1.0/dx, -kwav - 1.0/(kwav*dx*dx)));
         
             idx = new IndexPair(cind, uind);
             mat.put(idx, new Complex(1.0/dx, 0.0));
 
+            idx = new IndexPair(cind, lind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
+            idx = new IndexPair(cind, rind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
         }
 
         // left boundary
-        for (int j=0;j<hei-1; j++){
+        for (int j=1;j<hei-1; j++){
             cind = inds_to_global(0,j);
             rind = inds_to_global(1,j);
-            
+            uind = inds_to_global(0,j+1);
+            dind = inds_to_global(0,j-1);
+
+
             idx = new IndexPair(cind, cind);
-            mat.put(idx, new Complex(-1.0/dx, -omega/c0));
+            mat.put(idx, new Complex(-1.0/dx, -kwav - 1.0/(kwav*dx*dx)));
         
             idx = new IndexPair(cind, rind);
             mat.put(idx, new Complex(1.0/dx, 0.0));
 
+            idx = new IndexPair(cind, uind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
+            idx = new IndexPair(cind, dind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
         }
 
         // right boundary
-        for (int j=1; j<hei; j++){
+        for (int j=1; j<hei-1; j++){
             cind = inds_to_global(wid-1,j);
             lind = inds_to_global(wid-2,j);
-            
+            uind = inds_to_global(wid-1,j+1);
+            dind = inds_to_global(wid-1,j-1);
+
             idx = new IndexPair(cind, cind);
-            mat.put(idx, new Complex(1.0/dx, -omega/c0));
+            mat.put(idx, new Complex(1.0/dx, -kwav - 1.0/(kwav*dx*dx)));
         
             idx = new IndexPair(cind, lind);
             mat.put(idx, new Complex(-1.0/dx, 0.0));
 
+            idx = new IndexPair(cind, uind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
+            idx = new IndexPair(cind, dind);
+            mat.put(idx, new Complex(0.0, 1.0/(2.0*kwav*dx*dx)));
+
         }
+
+        // corners
+        // bottom left
+        cind = inds_to_global(0,0);
+        uind = inds_to_global(0,1);
+        rind = inds_to_global(1,0);
+        idx = new IndexPair(cind, cind);
+        mat.put(idx, new Complex(-2.0/dx, 0.0));
+        idx = new IndexPair(cind, uind);
+        mat.put(idx, new Complex(1.0/dx, 0.0));
+        idx = new IndexPair(cind, rind);
+        mat.put(idx, new Complex(1.0/dx, 0.0));
+
+        // bottom right
+        cind = inds_to_global(wid-1,0);
+        uind = inds_to_global(wid-1,1);
+        lind = inds_to_global(wid-2,0);
+        idx = new IndexPair(cind, uind);
+        mat.put(idx, new Complex(1.0/dx, 0.0));
+        idx = new IndexPair(cind, lind);
+        mat.put(idx, new Complex(-1.0/dx, 0.0));
+
+        // top right
+        cind = inds_to_global(wid-1,hei-1);
+        dind = inds_to_global(wid-1,hei-2);
+        lind = inds_to_global(wid-2,hei-1);
+        idx = new IndexPair(cind, cind);
+        mat.put(idx, new Complex(2.0/dx, 0.0));
+        idx = new IndexPair(cind, dind);
+        mat.put(idx, new Complex(-1.0/dx, 0.0));
+        idx = new IndexPair(cind, lind);
+        mat.put(idx, new Complex(-1.0/dx, 0.0));
+
+        // top left
+        cind = inds_to_global(0,hei-1);
+        dind = inds_to_global(0,hei-2);
+        rind = inds_to_global(1,hei-1);
+        idx = new IndexPair(cind, rind);
+        mat.put(idx, new Complex(1.0/dx, 0.0));
+        idx = new IndexPair(cind, dind);
+        mat.put(idx, new Complex(-1.0/dx, 0.0));
 
         dmat = mat;
         return dmat;
@@ -304,18 +379,18 @@ public class HelmholtzOperator2D implements FDOperator{
         hmap.put(idx, new Complex(1.0/dx, 0.0));
 
         // bottom right
-        cind = inds_to_global(wid,0);
-        uind = inds_to_global(wid,1);
-        lind = inds_to_global(wid-1,0);
+        cind = inds_to_global(wid-1,0);
+        uind = inds_to_global(wid-1,1);
+        lind = inds_to_global(wid-2,0);
         idx = new IndexPair(cind, uind);
         hmap.put(idx, new Complex(1.0/dx, 0.0));
         idx = new IndexPair(cind, lind);
         hmap.put(idx, new Complex(-1.0/dx, 0.0));
 
         // top right
-        cind = inds_to_global(wid,hei);
-        dind = inds_to_global(wid,hei-1);
-        lind = inds_to_global(wid-1,hei);
+        cind = inds_to_global(wid-1,hei-1);
+        dind = inds_to_global(wid-1,hei-2);
+        lind = inds_to_global(wid-2,hei-1);
         idx = new IndexPair(cind, cind);
         hmap.put(idx, new Complex(2.0/dx, 0.0));
         idx = new IndexPair(cind, dind);
@@ -324,9 +399,9 @@ public class HelmholtzOperator2D implements FDOperator{
         hmap.put(idx, new Complex(-1.0/dx, 0.0));
 
         // top left
-        cind = inds_to_global(0,hei);
-        dind = inds_to_global(0,hei-1);
-        rind = inds_to_global(1,hei);
+        cind = inds_to_global(0,hei-1);
+        dind = inds_to_global(0,hei-2);
+        rind = inds_to_global(1,hei-1);
         idx = new IndexPair(cind, rind);
         hmap.put(idx, new Complex(1.0/dx, 0.0));
         idx = new IndexPair(cind, dind);
