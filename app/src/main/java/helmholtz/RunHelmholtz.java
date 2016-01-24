@@ -61,6 +61,22 @@ public class RunHelmholtz{
 		// 	fplan.set_pixel_material(1, i14, j+6);
 		// }
 
+		// // test out the gaussian elimination
+		// DCVector sol = DCVector.rand(6);
+		// System.out.println("true solution: ");
+		// sol.print();
+		// DDCMatrix rmat = DDCMatrix.rand(6,6);
+		// DCVector rhs = rmat.MatVec(sol);
+		// System.out.println("rhs: ");
+		// rhs.print();
+
+		// GaussElim gel = new GaussElim();
+		// DCVector sapp = gel.solve(rmat, rhs);
+		// System.out.println("approx solutin: ");
+		// sapp.print();
+
+		// if (true) return;
+		
 		// print it
 		//fplan.print_floorplan();
 

@@ -1,5 +1,6 @@
 package helmholtz;
 
+import java.util.Random;
 
 public class DCVector extends Object{
 	private Complex[] data;
@@ -90,5 +91,14 @@ public class DCVector extends Object{
 		}
 	}
 
+	public static DCVector rand(int m){
+		Random rgen = new Random();
+		DCVector out = new DCVector(m);
+
+		for (int i=0; i<m; i++){
+			out.put(i, new Complex(rgen.nextDouble(), rgen.nextDouble()));
+		}
+		return out;
+	}
 
 }
