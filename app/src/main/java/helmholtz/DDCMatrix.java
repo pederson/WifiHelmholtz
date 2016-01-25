@@ -82,7 +82,6 @@ public class DDCMatrix extends Object{
 	}
 
 	public DCVector forward_solve(DCVector v){
-		System.out.println("FORWARD!!!!!!!!!!!!!!");
 		DCVector out = new DCVector(mrows);
 		Complex s;
 
@@ -97,7 +96,6 @@ public class DDCMatrix extends Object{
 	}
 
 	public DCVector back_solve(DCVector v){
-		System.out.println("BACKWARD!!!!!!!!!!!!!!");
 		DCVector out = new DCVector(mrows);
 		Complex s;
 

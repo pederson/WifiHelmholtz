@@ -95,7 +95,7 @@ public class FCycle{
 		solns.set(0, gel.solve(op0, rhss.get(0)));
 		System.out.println(" ");
 		System.out.println("..... BOTTOM LEVEL .....");
-		resid = rhss.get(0).minus(apply_operator(0,solns.get(0)));
+		resid = rhss.get(0).minus(op0.getDenseMatrix().MatVec(solns.get(0)));
 		System.out.println("resid: "+resid.dot(resid).toString());
 
 		// cycle upwards with increasing reach
@@ -111,8 +111,18 @@ public class FCycle{
 				sln = solns.get(u);
 				rhs = rhss.get(u);
 
+				if (l==1 && u==1){
+					System.out.println("Pre interpolation: ");
+					grids.get(u-1).print_vector_abs(solns.get(u-1));
+				}
+
 				// interpolate the error
 				err = grids.get(u-1).interpolate(solns.get(u-1));
+
+				if (l==1 && u==1){
+					System.out.println("Post interpolation: ");
+					g.print_vector_abs(err);
+				}
 
 				// update the solution with error
 				System.out.println("old sln: "+sln.dot(sln).toString());
@@ -161,8 +171,14 @@ public class FCycle{
 
 			}
 
+
 			// solve at the bottom by gaussian elimination
 			solns.set(0, gel.solve(op0, rhss.get(0)));
+			System.out.println(" ");
+			System.out.println("..... BOTTOM LEVEL .....");
+			resid = rhss.get(0).minus(op0.getDenseMatrix().MatVec(solns.get(0)));
+			System.out.println("resid: "+resid.dot(resid).toString());
+
 		}
 
 		// make final ascent to the top level

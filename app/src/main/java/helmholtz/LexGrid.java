@@ -105,50 +105,55 @@ public class LexGrid extends Object{
 		// System.out.println("rows: "+mrows+" cols: "+ncols);
 		// System.out.println("newrows: "+newrows+" newcols: "+newcols);
 
-		// exact interpolation at coarse grid points
-		for (int i=0; i<mrows; i++){
-			for (int j=0; j<ncols; j++){
-				//System.out.println("loc:"+(j*ncols+i));
-				// equivalent fine grid point
-				out.put(2*j*newcols+2*i, shortvec.at(j*ncols+i).copy());
 
-			}
-		}
-
-		// linear interpolation at horizontal coarse grid points
-		for (int i=0; i<mrows-1; i++){
-			for (int j=0; j<ncols; j++){
-
-				// interpolate
-				interp = (shortvec.at(j*ncols+i).plus(shortvec.at(j*ncols+i+1))).times(0.5);
-
-				// equivalent fine grid point
-				out.put(2*j*ncols+2*i+1, interp);
-
-			}
-		}
-
-		// linear interpolation at vertical coarse grid points
-		for (int i=0; i<mrows; i++){
-			for (int j=0; j<ncols-1; j++){
-
-				// interpolate
-				interp = (shortvec.at(j*ncols+i).plus(shortvec.at((j+1)*ncols+i))).times(0.5);
-
-				// equivalent fine grid point
-				out.put((2*j+1)*ncols+2*i, interp);
-
-			}
-		}
+		// 
 
 
-		// bilinear interpolation for remaining points
-		for (int i=1; i<newrows; i+=2){
-			for (int j=1; j<newcols; j+=2){
 
-				bl = shortvec.at((j-1)/2*ncols + (i-1)/2);
-				br = shortvec.at((j-1)/2*ncols + (i+1)/2);
-				tl = shortvec.at((j+1)/2*ncols + (i-1)/2);
+		// // exact interpolation at coarse grid points
+		// for (int i=0; i<mrows; i++){
+		// 	for (int j=0; j<ncols; j++){
+		// 		//System.out.println("loc:"+(j*ncols+i));
+		// 		// equivalent fine grid point
+		// 		out.put(2*j*newcols+2*i, shortvec.at(j*ncols+i).copy());
+
+		// 	}
+		// }
+
+		// // linear interpolation at horizontal coarse grid points
+		// for (int i=0; i<mrows-1; i++){
+		// 	for (int j=0; j<ncols; j++){
+
+		// 		// interpolate
+		// 		interp = (shortvec.at(j*ncols+i).plus(shortvec.at(j*ncols+i+1))).times(0.5);
+
+		// 		// equivalent fine grid point
+		// 		out.put(2*j*ncols+2*i+1, interp);
+
+		// 	}
+		// }
+
+		// // linear interpolation at vertical coarse grid points
+		// for (int i=0; i<mrows; i++){
+		// 	for (int j=0; j<ncols-1; j++){
+
+		// 		// interpolate
+		// 		interp = (shortvec.at(j*ncols+i).plus(shortvec.at((j+1)*ncols+i))).times(0.5);
+
+		// 		// equivalent fine grid point
+		// 		out.put((2*j+1)*ncols+2*i, interp);
+
+		// 	}
+		// }
+
+
+		// bilinear interpolation for interior points
+		for (int i=1; i<newrows-1; i++){
+			for (int j=1; j<newcols-1; j++){
+
+				bl = shortvec.at((j)/2*ncols + (i)/2);
+				br = shortvec.at((j)/2*ncols + (i+1)/2);
+				tl = shortvec.at((j+1)/2*ncols + (i)/2);
 				tr = shortvec.at((j+1)/2*ncols + (i+1)/2);
 
 
@@ -160,6 +165,48 @@ public class LexGrid extends Object{
 				out.put(j*newcols+i, interp);
 			}
 		}
+
+		// bottom row
+		for (int i=1; i<newrows-1; i++){
+			bl = shortvec.at((i)/2);
+			br = shortvec.at((i+1)/2);
+
+			interp = (bl.plus(br)).times(0.5);
+			out.put(i, interp);
+		}
+
+		// top row
+		for (int i=1; i<newrows-1; i++){
+			tl = shortvec.at((ncols-1)*ncols + (i)/2);
+			tr = shortvec.at((ncols-1)*ncols + (i+1)/2);
+
+			interp = (tl.plus(tr)).times(0.5);
+			out.put((newcols-1)*newcols+i, interp);
+		}
+
+		// left column
+		for (int j=1; j<newcols-1; j++){
+			bl = shortvec.at((j)/2*ncols);
+			tl = shortvec.at((j+1)/2*ncols);
+
+			interp = (bl.plus(tl)).times(0.5);
+			out.put(j*newcols, interp);
+		}
+
+		// right column
+		for (int j=1; j<newcols-1; j++){
+			br = shortvec.at((j)/2*ncols + (newrows)/2);
+			tr = shortvec.at((j+1)/2*ncols + (newrows)/2);
+
+			interp = (br.plus(tr)).times(0.5);
+			out.put(j*newcols+newrows-1, interp);
+		}
+
+		// the four corners
+		out.put(0, shortvec.at(0));
+		out.put((newcols-1)*newcols, shortvec.at((ncols-1)*ncols));
+		out.put((newrows-1),shortvec.at(mrows-1));
+		out.put((newcols-1)*newcols + (newrows-1), shortvec.at((ncols-1)*ncols + (mrows-1)));
 
 		return out;
 	}
@@ -207,6 +254,17 @@ public class LexGrid extends Object{
 		for (int i=0; i<mrows; i++){
 			for (int j=0; j<ncols; j++){
 				System.out.print(vec.at(j*ncols+i));
+				System.out.print(",");
+			}
+			System.out.println(" ");
+		}
+	}
+
+	public void print_vector_abs(DCVector vec){
+
+		for (int i=0; i<mrows; i++){
+			for (int j=0; j<ncols; j++){
+				System.out.print(vec.at(j*ncols+i).mod());
 				System.out.print(",");
 			}
 			System.out.println(" ");

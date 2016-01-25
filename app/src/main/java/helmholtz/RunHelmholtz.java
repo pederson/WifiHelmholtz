@@ -76,7 +76,7 @@ public class RunHelmholtz{
 		// sapp.print();
 
 		// if (true) return;
-		
+
 		// print it
 		//fplan.print_floorplan();
 
@@ -91,6 +91,6 @@ public class RunHelmholtz{
 
 		HelmholtzSolver hsolve = new HelmholtzSolver(flayout);
 		hsolve.solve();
-		hsolve.print_solution();
+		//hsolve.print_solution();
 	}
 }
